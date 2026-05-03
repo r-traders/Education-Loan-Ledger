@@ -411,6 +411,7 @@
   <!-- TABS -->
   <div class="tabs">
     <button class="tab active" onclick="switchTab(this, 'tab-setup')">Setup</button>
+    <button class="tab" onclick="switchTab(this, 'tab-reminders')">Reminders</button>
     <button class="tab" onclick="switchTab(this, 'tab-payments')">Log Payments</button>
     <button class="tab" onclick="switchTab(this, 'tab-disbursements')">Disbursements</button>
     <button class="tab" onclick="switchTab(this, 'tab-investments')">Investment Tracker</button>
@@ -460,12 +461,12 @@
     </section>
 
     <section>
-      <h2>Adhoc Plan <span class="num">§ II</span></h2>
+      <h2>Adhoc Plan</h2>
       <div class="card">
         <div class="row-3">
           <div>
             <label>Annual Adhoc Amount (₹)</label>
-            <input type="number" id="setup-adhoc-amt" value="100000" />
+            <input type="number" id="setup-adhoc-amt" value="50000" />
           </div>
           <div>
             <label>Adhoc Month</label>
@@ -484,6 +485,54 @@
           </div>
         </div>
         <button onclick="saveSetup()">Save Adhoc Plan</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- TAB: REMINDERS -->
+  <div class="tab-content" id="tab-reminders">
+    <section>
+      <h2>Reminders &amp; Milestones <span class="num">§ II</span></h2>
+
+      <div class="card">
+        <div id="upcoming-reminders"></div>
+      </div>
+
+      <h3>All Milestones (Pre-loaded)</h3>
+      <div class="card tight">
+        <div id="milestones-list"></div>
+      </div>
+
+      <h3>Add Custom Reminder</h3>
+      <div class="card">
+        <div class="row-4">
+          <div>
+            <label>Date</label>
+            <input type="month" id="reminder-date" />
+          </div>
+          <div>
+            <label>Title</label>
+            <input type="text" id="reminder-title" placeholder="e.g., Review with bank" />
+          </div>
+          <div>
+            <label>Type</label>
+            <select id="reminder-type">
+              <option value="emi">EMI Action</option>
+              <option value="adhoc">Adhoc Payment</option>
+              <option value="review">Review / Check-in</option>
+              <option value="milestone">Milestone</option>
+              <option value="custom">Other</option>
+            </select>
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button onclick="addReminder()">Add</button>
+          </div>
+        </div>
+        <div>
+          <label>Notes (optional)</label>
+          <input type="text" id="reminder-notes" placeholder="Any details to remember" />
+        </div>
       </div>
     </section>
   </div>
@@ -568,11 +617,14 @@
 
       <div class="two-col">
         <div class="card">
-          <h3 class="mt-0">Adhoc Fund <span class="pill muted">Short-term · Debt</span></h3>
+          <h3 class="mt-0">Adhoc Fund <span class="pill muted">Short-term · Liquid</span></h3>
+          <div class="info-box" style="margin-top: 0; margin-bottom: 12px; padding: 8px 10px; font-size: 12px;">
+            Suggested fund: <strong>HDFC Liquid Fund — Direct — Growth</strong>. Fund March adhoc payments year on year.
+          </div>
           <div class="row">
             <div>
               <label>Current Corpus (₹)</label>
-              <input type="number" id="adhoc-corpus" value="100000" />
+              <input type="number" id="adhoc-corpus" value="50000" />
             </div>
             <div>
               <label>Monthly SIP (₹)</label>
@@ -594,7 +646,10 @@
         </div>
 
         <div class="card">
-          <h3 class="mt-0">Long-term Cushion <span class="pill muted">4+ years · Equity</span></h3>
+          <h3 class="mt-0">Long-term Cushion <span class="pill muted">4+ years · Dividend Yield</span></h3>
+          <div class="info-box" style="margin-top: 0; margin-bottom: 12px; padding: 8px 10px; font-size: 12px;">
+            Suggested fund: <strong>ICICI Prudential Dividend Yield Equity Fund — Direct — Growth</strong>. Defensive equity, lower volatility than Nifty.
+          </div>
           <div class="row">
             <div>
               <label>Current Corpus (₹)</label>
@@ -602,13 +657,13 @@
             </div>
             <div>
               <label>Monthly SIP (₹)</label>
-              <input type="number" id="lt-sip" value="3000" />
+              <input type="number" id="lt-sip" value="3500" />
             </div>
           </div>
           <div class="row">
             <div>
               <label>Expected Annual Return (%)</label>
-              <input type="number" id="lt-return" value="11" step="0.1" />
+              <input type="number" id="lt-return" value="14" step="0.1" />
             </div>
             <div>
               <label>&nbsp;</label>
@@ -632,17 +687,21 @@
       </div>
 
       <h3>Detailed Schedule</h3>
+      <div class="info-box" style="margin-bottom: 12px;">
+        <strong>How to read this:</strong> Bank adds <em>Interest</em> to your balance each month, then your <em>EMI + Adhoc</em> payments reduce it. The "<em>To Principal</em>" column shows how much of your EMI actually shrinks the loan — the rest is just paying interest the bank charged that month.
+      </div>
       <div class="table-scroll">
         <table id="projection-table">
           <thead>
             <tr>
               <th>Month</th>
               <th class="mono">Opening</th>
-              <th class="mono">Interest</th>
-              <th class="mono">Disburse</th>
-              <th class="mono">EMI</th>
-              <th class="mono">Adhoc</th>
-              <th class="mono">Closing</th>
+              <th class="mono">+ Interest</th>
+              <th class="mono">+ Disburse</th>
+              <th class="mono">− EMI</th>
+              <th class="mono">− Adhoc</th>
+              <th class="mono">= Closing</th>
+              <th class="mono">To Principal</th>
               <th>Notes</th>
             </tr>
           </thead>
@@ -698,7 +757,7 @@ let state = {
     moratoriumEnd: '2029-12',
     phase2Emi: 100000,
     surplus: 1000,
-    adhocAmount: 100000,
+    adhocAmount: 50000,
     adhocMonth: 3,
     adhocYears: 3,
   },
@@ -710,13 +769,15 @@ let state = {
     { date: '2027-09', amount: 1200000 },
   ],
   investments: {
-    adhocCorpus: 100000,
+    adhocCorpus: 50000,
     adhocSip: 5000,
     adhocReturn: 6.5,
     ltCorpus: 0,
-    ltSip: 3000,
-    ltReturn: 11,
+    ltSip: 3500,
+    ltReturn: 14,
   },
+  customReminders: [],
+  completedReminders: {},  // {reminderId: true}
 };
 
 const STORAGE_KEY = 'loan-tracker-data-v1';
@@ -730,6 +791,8 @@ function load() {
     if (raw) {
       const loaded = JSON.parse(raw);
       state = { ...state, ...loaded, setup: { ...state.setup, ...loaded.setup }, investments: { ...state.investments, ...(loaded.investments || {}) } };
+      if (!Array.isArray(state.customReminders)) state.customReminders = [];
+      if (!state.completedReminders || typeof state.completedReminders !== 'object') state.completedReminders = {};
     }
   } catch (e) { console.warn('Load failed', e); }
 }
@@ -903,6 +966,8 @@ function renderHero() {
   document.getElementById('hero-balance-sub').textContent = 'as of ' + fmtMonth(state.setup.asOf);
   document.getElementById('hero-interest').textContent = fmtINR(interest);
   document.getElementById('hero-emi').textContent = fmtINR(recEmi);
+  const toPrincipal = recEmi - interest;
+  document.getElementById('hero-emi-sub').textContent = '₹' + Math.round(toPrincipal).toLocaleString('en-IN') + ' goes to principal';
 
   // Plan status: compare last 3 months of actual vs recommended
   const recentActual = state.payments.filter(p => {
@@ -1037,15 +1102,28 @@ function renderInvestments() {
   let lt = inv.ltCorpus;
   const moratMonths = monthsBetween(state.setup.asOf, state.setup.moratoriumEnd);
   let log2 = '<div class="small-text" style="margin-bottom: 8px;">Compound growth at ' + inv.ltReturn + '% with monthly SIP of ' + fmtINR(inv.ltSip) + '</div>';
-  log2 += '<table style="width: 100%;"><thead><tr><th>Year</th><th class="mono">Corpus</th></tr></thead><tbody>';
+  log2 += '<table style="width: 100%;"><thead><tr><th>Year</th><th class="mono">Corpus</th><th>Notes</th></tr></thead><tbody>';
+  let ltAtMoratEnd = 0;
   for (let i = 0; i < moratMonths + 60; i++) {
     lt = lt * (1 + r2) + inv.ltSip;
     if ((i + 1) % 12 === 0) {
       const yr = yStart + Math.floor((mStart - 1 + i + 1) / 12);
-      log2 += '<tr><td>' + fmtMonth(yr + '-' + String(((mStart - 1 + i + 1) % 12) + 1).padStart(2, '0')) + '</td><td class="mono">' + fmtINR(lt) + '</td></tr>';
+      const mo = ((mStart - 1 + i + 1) % 12) + 1;
+      const monthStr = yr + '-' + String(mo).padStart(2, '0');
+      let note = '';
+      if (monthsBetween(monthStr, state.setup.moratoriumEnd) === 0) {
+        note = '<span class="pill good">Phase 2 begins</span>';
+        ltAtMoratEnd = lt;
+      } else if (Math.abs(monthsBetween(monthStr, state.setup.moratoriumEnd)) <= 6) {
+        note = '<span class="small-text">near moratorium end</span>';
+      }
+      log2 += '<tr' + (note.includes('Phase 2') ? ' class="adhoc-row"' : '') + '><td>' + fmtMonth(monthStr) + '</td><td class="mono">' + fmtINR(lt) + '</td><td>' + note + '</td></tr>';
     }
   }
   log2 += '</tbody></table>';
+  if (ltAtMoratEnd > 0) {
+    log2 += '<div class="info-box good" style="margin-top: 10px; font-size: 12px;">Available for one-time prepayment when Phase 2 starts: <strong>~' + fmtINR(ltAtMoratEnd) + '</strong>. This could shorten your Phase 2 by several months.</div>';
+  }
   document.getElementById('lt-projection').innerHTML = log2;
 }
 
@@ -1069,6 +1147,21 @@ function renderProjection() {
     if (row.isActual) notes.push('actual');
     if (!row.inMoratorium) notes.push('phase 2');
 
+    // Calculate how much of the EMI actually went to principal reduction
+    // To Principal = EMI - Interest (if positive, reduces principal; if negative, balance grew)
+    const toPrincipal = row.emi - row.interest;
+    let principalCellClass = '';
+    let principalDisplay;
+    if (toPrincipal > 0) {
+      principalCellClass = 'text-good';
+      principalDisplay = fmtINR(toPrincipal);
+    } else if (toPrincipal < 0) {
+      principalCellClass = 'text-bad';
+      principalDisplay = '−' + fmtINR(Math.abs(toPrincipal));
+    } else {
+      principalDisplay = '—';
+    }
+
     html += '<tr class="' + cls + '">';
     html += '<td>' + fmtMonth(row.month) + '</td>';
     html += '<td class="mono">' + fmtINR(row.opening) + '</td>';
@@ -1077,6 +1170,7 @@ function renderProjection() {
     html += '<td class="mono">' + fmtINR(row.emi) + '</td>';
     html += '<td class="mono">' + (row.adhoc ? fmtINR(row.adhoc) : '—') + '</td>';
     html += '<td class="mono">' + fmtINR(row.closing) + '</td>';
+    html += '<td class="mono ' + principalCellClass + '">' + principalDisplay + '</td>';
     html += '<td><span class="small-text">' + notes.join(' · ') + '</span></td>';
     html += '</tr>';
   });
@@ -1153,11 +1247,172 @@ function renderScenarios() {
 
 function renderAll() {
   renderHero();
+  renderReminders();
   renderPayments();
   renderDisbursements();
   renderInvestments();
   renderProjection();
   renderScenarios();
+}
+
+// =================================================================
+// REMINDERS
+// =================================================================
+function buildAutoReminders() {
+  // Auto-generated reminders from setup data
+  const reminders = [];
+
+  // EMI step-up reminders at each disbursement
+  state.disbursements.forEach(d => {
+    // Calculate balance at time of disbursement to show the recommended new EMI
+    // We'll use a simple approach: recommend at current setup
+    reminders.push({
+      id: 'auto-emi-' + d.date,
+      date: d.date,
+      type: 'emi',
+      title: 'Step up EMI after ' + fmtINR(d.amount) + ' disbursement',
+      notes: 'Disbursement adds ' + fmtINR(d.amount) + ' to balance. Increase EMI to stay ahead of new interest level. Check tracker for recommended amount.',
+    });
+  });
+
+  // Adhoc payment reminders
+  if (state.setup.adhocAmount > 0 && state.setup.adhocYears > 0) {
+    const [yStart, mStart] = state.setup.asOf.split('-').map(Number);
+    let firstYear = yStart;
+    if (state.setup.adhocMonth <= mStart) firstYear = yStart + 1;
+    for (let i = 0; i < state.setup.adhocYears; i++) {
+      const yr = firstYear + i;
+      const dateStr = yr + '-' + String(state.setup.adhocMonth).padStart(2, '0');
+      reminders.push({
+        id: 'auto-adhoc-' + dateStr,
+        date: dateStr,
+        type: 'adhoc',
+        title: 'Adhoc payment of ' + fmtINR(state.setup.adhocAmount) + ' due',
+        notes: 'Withdraw from liquid fund and pay to loan account. Log payment in tracker as type "Adhoc".',
+      });
+    }
+  }
+
+  // Phase 2 begins
+  reminders.push({
+    id: 'auto-phase2',
+    date: addMonths(state.setup.moratoriumEnd, 1),
+    type: 'milestone',
+    title: 'Phase 2 begins — full EMI of ' + fmtINR(state.setup.phase2Emi) + ' starts',
+    notes: 'Moratorium has ended. Confirm with bank that the new EMI amount is set up correctly. This is when the loan really starts getting paid down.',
+  });
+
+  // Annual review check-ins (Oct of each year during moratorium)
+  const [yStart, mStart] = state.setup.asOf.split('-').map(Number);
+  for (let yr = yStart; yr <= parseInt(state.setup.moratoriumEnd.split('-')[0]); yr++) {
+    const reviewDate = yr + '-10';
+    if (monthsBetween(state.setup.asOf, reviewDate) > 0 && monthsBetween(reviewDate, state.setup.moratoriumEnd) >= 0) {
+      reminders.push({
+        id: 'auto-review-' + yr,
+        date: reviewDate,
+        type: 'review',
+        title: 'Half-yearly review',
+        notes: 'Check: actual payments vs plan, interest rate (still 7.35%?), investment SIPs running, balance trajectory matching projection.',
+      });
+    }
+  }
+
+  return reminders;
+}
+
+function getAllReminders() {
+  return [...buildAutoReminders(), ...state.customReminders];
+}
+
+function renderReminders() {
+  const all = getAllReminders().sort((a, b) => a.date.localeCompare(b.date));
+  const today = new Date();
+  const todayMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+
+  // Upcoming (next 6 months)
+  const upcoming = all.filter(r => {
+    const diff = monthsBetween(todayMonth, r.date);
+    return diff >= 0 && diff <= 6 && !state.completedReminders[r.id];
+  });
+
+  let upcomingHtml = '<h3 class="mt-0">Coming Up (next 6 months)</h3>';
+  if (upcoming.length === 0) {
+    upcomingHtml += '<div class="small-text">Nothing in the next 6 months.</div>';
+  } else {
+    upcoming.forEach(r => {
+      const monthsAway = monthsBetween(todayMonth, r.date);
+      const urgency = monthsAway === 0 ? 'bad' : monthsAway <= 1 ? 'warn' : 'good';
+      const urgencyText = monthsAway === 0 ? 'this month' : monthsAway === 1 ? 'next month' : monthsAway + ' months away';
+      upcomingHtml += '<div class="info-box ' + (urgency === 'bad' ? 'warn' : urgency === 'warn' ? 'warn' : '') + '" style="margin: 8px 0; padding: 10px 12px;">';
+      upcomingHtml += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">';
+      upcomingHtml += '<strong>' + fmtMonth(r.date) + ' &middot; ' + r.title + '</strong>';
+      upcomingHtml += '<span class="pill ' + urgency + '">' + urgencyText + '</span>';
+      upcomingHtml += '</div>';
+      if (r.notes) upcomingHtml += '<div class="small-text" style="margin-top: 4px;">' + r.notes + '</div>';
+      upcomingHtml += '<div style="margin-top: 6px;"><button class="small secondary" onclick="markReminderDone(\'' + r.id + '\')">Mark done</button></div>';
+      upcomingHtml += '</div>';
+    });
+  }
+  document.getElementById('upcoming-reminders').innerHTML = upcomingHtml;
+
+  // All milestones list
+  let listHtml = '';
+  if (all.length === 0) {
+    listHtml = '<div class="small-text center" style="padding: 20px;">No reminders yet.</div>';
+  } else {
+    all.forEach(r => {
+      const isPast = monthsBetween(todayMonth, r.date) < 0;
+      const isDone = state.completedReminders[r.id];
+      const isCustom = r.id.startsWith('custom-');
+      let pillClass = 'muted';
+      let pillText = r.type;
+      if (isDone) { pillClass = 'good'; pillText = 'done'; }
+      else if (isPast) { pillClass = 'muted'; pillText = 'past'; }
+
+      listHtml += '<div class="list-item" style="' + (isDone ? 'opacity: 0.5;' : '') + '">';
+      listHtml += '<div>';
+      listHtml += '<div><strong>' + fmtMonth(r.date) + '</strong> · ' + r.title + ' <span class="pill ' + pillClass + '">' + pillText + '</span></div>';
+      if (r.notes) listHtml += '<div class="small-text">' + r.notes + '</div>';
+      listHtml += '</div>';
+      listHtml += '<div class="gap-row">';
+      if (!isDone && !isPast) listHtml += '<button class="small secondary" onclick="markReminderDone(\'' + r.id + '\')">Done</button>';
+      if (isDone) listHtml += '<button class="small secondary" onclick="unmarkReminderDone(\'' + r.id + '\')">Undo</button>';
+      if (isCustom) listHtml += '<button class="icon" onclick="deleteCustomReminder(\'' + r.id + '\')">×</button>';
+      listHtml += '</div>';
+      listHtml += '</div>';
+    });
+  }
+  document.getElementById('milestones-list').innerHTML = listHtml;
+}
+
+function addReminder() {
+  const date = document.getElementById('reminder-date').value;
+  const title = document.getElementById('reminder-title').value.trim();
+  const type = document.getElementById('reminder-type').value;
+  const notes = document.getElementById('reminder-notes').value.trim();
+  if (!date || !title) { alert('Please enter date and title'); return; }
+  const id = 'custom-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+  state.customReminders.push({ id, date, title, type, notes });
+  document.getElementById('reminder-date').value = '';
+  document.getElementById('reminder-title').value = '';
+  document.getElementById('reminder-notes').value = '';
+  save(); renderReminders();
+}
+
+function markReminderDone(id) {
+  state.completedReminders[id] = true;
+  save(); renderReminders();
+}
+
+function unmarkReminderDone(id) {
+  delete state.completedReminders[id];
+  save(); renderReminders();
+}
+
+function deleteCustomReminder(id) {
+  state.customReminders = state.customReminders.filter(r => r.id !== id);
+  delete state.completedReminders[id];
+  save(); renderReminders();
 }
 
 // =================================================================
