@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Loan Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #fbfaf6;
+    --ink: #1a1815;
+    --ink-soft: #5a554d;
+    --ink-faint: #908a80;
+    --rule: #e8e3d8;
+    --rule-soft: #f0ece2;
+    --accent: #8b3a1f;
+    --accent-soft: #f5e6df;
+    --good: #2d5a3d;
+    --good-soft: #e0ebe2;
+    --warn: #8a5a18;
+    --warn-soft: #f4ead4;
+    --bad: #8b2424;
+    --bad-soft: #f3dfdf;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    margin: 0;
+    padding: 0;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(at 15% 5%, rgba(139, 58, 31, 0.03) 0px, transparent 50%),
+      radial-gradient(at 85% 95%, rgba(45, 90, 61, 0.025) 0px, transparent 50%);
+    min-height: 100vh;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 32px 24px 80px; }
+
+  /* Header */
+  header {
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 18px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 32px;
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: var(--ink);
+  }
+  h1 em { font-style: italic; color: var(--accent); font-weight: 500; }
+  .tagline {
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-style: italic;
+    font-family: 'Fraunces', serif;
+  }
+
+  /* Sections */
+  section {
+    margin-bottom: 36px;
+  }
+  h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    margin: 0 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  h2 .num {
+    font-size: 13px;
+    color: var(--ink-faint);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 400;
+  }
+  h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 16px;
+    margin: 16px 0 10px;
+    color: var(--ink);
+  }
+
+  /* Cards */
+  .card {
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+  .card.tight { padding: 14px 16px; }
+
+  /* Status hero */
+  .status-hero {
+    background: linear-gradient(135deg, #faf7ee 0%, #fbfaf6 100%);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 24px 26px;
+    margin-bottom: 24px;
+  }
+  .status-row { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 24px; }
+  @media (max-width: 800px) { .status-row { grid-template-columns: 1fr 1fr; } }
+  .stat-block .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .stat-block .value {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+  .stat-block .sub {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    font-style: italic;
+    font-family: 'Fraunces', serif;
+  }
+  .stat-block.accent .value { color: var(--accent); }
+  .stat-block.good .value { color: var(--good); }
+  .stat-block.warn .value { color: var(--warn); }
+  .stat-block.bad .value { color: var(--bad); }
+
+  /* Inputs */
+  label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+    font-weight: 500;
+    margin-bottom: 5px;
+  }
+  input[type="number"], input[type="text"], input[type="date"], input[type="month"], select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    font-size: 14px;
+    background: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink);
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: white;
+  }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .row-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .row-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  @media (max-width: 700px) {
+    .row, .row-3, .row-4 { grid-template-columns: 1fr; }
+  }
+
+  /* Buttons */
+  button {
+    background: var(--ink);
+    color: var(--paper);
+    border: 1px solid var(--ink);
+    padding: 8px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.02em;
+    transition: opacity 0.15s;
+  }
+  button:hover { opacity: 0.85; }
+  button.secondary {
+    background: transparent;
+    color: var(--ink);
+  }
+  button.danger {
+    background: transparent;
+    color: var(--bad);
+    border-color: var(--bad);
+  }
+  button.accent {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  button.small { padding: 5px 10px; font-size: 12px; }
+  button.icon {
+    padding: 4px 8px;
+    font-size: 12px;
+    background: transparent;
+    color: var(--ink-soft);
+    border: none;
+  }
+  button.icon:hover { color: var(--accent); }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 18px;
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 10px 18px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    white-space: nowrap;
+    font-family: 'Inter', sans-serif;
+  }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tab:hover { color: var(--ink); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td {
+    text-align: right;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  th {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+    font-weight: 500;
+    border-bottom: 1px solid var(--rule);
+    background: var(--rule-soft);
+  }
+  th:first-child, td:first-child { text-align: left; }
+  td.mono, th.mono { font-family: 'JetBrains Mono', monospace; }
+  tr.disbursement-row { background: rgba(139, 58, 31, 0.04); }
+  tr.adhoc-row { background: rgba(45, 90, 61, 0.04); }
+  tr.actual-row { background: rgba(138, 90, 24, 0.04); font-weight: 500; }
+  tr.future-row { color: var(--ink-soft); }
+
+  .table-scroll { max-height: 500px; overflow-y: auto; border: 1px solid var(--rule); border-radius: 3px; }
+  .table-scroll th { position: sticky; top: 0; z-index: 1; }
+
+  /* Pills & badges */
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .pill.good { background: var(--good-soft); color: var(--good); }
+  .pill.warn { background: var(--warn-soft); color: var(--warn); }
+  .pill.bad { background: var(--bad-soft); color: var(--bad); }
+  .pill.muted { background: var(--rule-soft); color: var(--ink-soft); }
+
+  /* List items */
+  .list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--rule-soft);
+    font-size: 13px;
+  }
+  .list-item:last-child { border-bottom: none; }
+  .list-item .meta { color: var(--ink-soft); font-size: 12px; }
+  .list-item .amount {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+  }
+
+  /* Info boxes */
+  .info-box {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    padding: 12px 14px;
+    border-radius: 3px;
+    font-size: 13px;
+    margin: 12px 0;
+    color: var(--ink);
+  }
+  .info-box.good {
+    background: var(--good-soft);
+    border-left-color: var(--good);
+  }
+  .info-box.warn {
+    background: var(--warn-soft);
+    border-left-color: var(--warn);
+  }
+  .info-box strong { font-weight: 600; }
+  .info-box em { font-family: 'Fraunces', serif; font-style: italic; }
+
+  /* Two columns */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* Helpers */
+  .currency { font-variant-numeric: tabular-nums; font-family: 'JetBrains Mono', monospace; }
+  .small-text { font-size: 12px; color: var(--ink-soft); }
+  .text-good { color: var(--good); }
+  .text-bad { color: var(--bad); }
+  .text-warn { color: var(--warn); }
+  .text-muted { color: var(--ink-faint); }
+  .right { text-align: right; }
+  .center { text-align: center; }
+  .mt-0 { margin-top: 0; }
+  .mb-0 { margin-bottom: 0; }
+  .gap-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .divider { height: 1px; background: var(--rule); margin: 18px 0; }
+
+  /* Footer */
+  footer {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-style: italic;
+    font-family: 'Fraunces', serif;
+    text-align: center;
+  }
+
+  /* Drop ornament */
+  .ornament {
+    text-align: center;
+    color: var(--ink-faint);
+    margin: 30px 0;
+    font-family: 'Fraunces', serif;
+    letter-spacing: 0.5em;
+  }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <h1>The Education Loan <em>Ledger</em></h1>
+      <div class="tagline">A patient instrument for tracking what is borrowed, paid, and owed.</div>
+    </div>
+    <div class="gap-row">
+      <button class="secondary small" onclick="exportData()">Export Data</button>
+      <button class="secondary small" onclick="importData()">Import</button>
+      <button class="danger small" onclick="resetAll()">Reset</button>
+    </div>
+  </header>
+
+  <!-- STATUS HERO -->
+  <div class="status-hero">
+    <div class="status-row">
+      <div class="stat-block accent">
+        <div class="label">Outstanding Today</div>
+        <div class="value currency" id="hero-balance">—</div>
+        <div class="sub" id="hero-balance-sub">as of today</div>
+      </div>
+      <div class="stat-block">
+        <div class="label">Monthly Interest</div>
+        <div class="value currency" id="hero-interest">—</div>
+        <div class="sub">at current rate</div>
+      </div>
+      <div class="stat-block" id="hero-emi-block">
+        <div class="label">Required EMI Now</div>
+        <div class="value currency" id="hero-emi">—</div>
+        <div class="sub" id="hero-emi-sub">to stay ahead</div>
+      </div>
+      <div class="stat-block" id="hero-status-block">
+        <div class="label">Plan Status</div>
+        <div class="value" id="hero-status" style="font-size: 22px;">—</div>
+        <div class="sub" id="hero-status-sub"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab(this, 'tab-setup')">Setup</button>
+    <button class="tab" onclick="switchTab(this, 'tab-payments')">Log Payments</button>
+    <button class="tab" onclick="switchTab(this, 'tab-disbursements')">Disbursements</button>
+    <button class="tab" onclick="switchTab(this, 'tab-investments')">Investment Tracker</button>
+    <button class="tab" onclick="switchTab(this, 'tab-projection')">Projection</button>
+    <button class="tab" onclick="switchTab(this, 'tab-scenarios')">Scenarios</button>
+  </div>
+
+  <!-- TAB: SETUP -->
+  <div class="tab-content active" id="tab-setup">
+    <section>
+      <h2>Loan Setup <span class="num">§ I</span></h2>
+      <div class="card">
+        <div class="row-3">
+          <div>
+            <label>Current Outstanding (₹)</label>
+            <input type="number" id="setup-balance" value="4715469" />
+          </div>
+          <div>
+            <label>Annual Interest Rate (%)</label>
+            <input type="number" id="setup-rate" value="7.35" step="0.01" />
+          </div>
+          <div>
+            <label>Statement Date</label>
+            <input type="month" id="setup-asof" value="2026-05" />
+          </div>
+        </div>
+        <div class="row-3">
+          <div>
+            <label>Moratorium Ends (Full EMI starts)</label>
+            <input type="month" id="setup-morat-end" value="2029-12" />
+          </div>
+          <div>
+            <label>Phase 2 EMI After Moratorium (₹)</label>
+            <input type="number" id="setup-phase2-emi" value="100000" />
+          </div>
+          <div>
+            <label>Surplus Buffer per EMI (₹)</label>
+            <input type="number" id="setup-surplus" value="1000" />
+            <div class="small-text">Extra to keep ahead of interest</div>
+          </div>
+        </div>
+        <div class="info-box">
+          <strong>How this works:</strong> Each time a disbursement is added, the tool calculates the new monthly interest and recommends an EMI level that covers interest + your buffer. Set buffer to <em>0</em> to just match interest, or higher for more aggressive payoff.
+        </div>
+        <button onclick="saveSetup()">Save Setup</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Adhoc Plan <span class="num">§ II</span></h2>
+      <div class="card">
+        <div class="row-3">
+          <div>
+            <label>Annual Adhoc Amount (₹)</label>
+            <input type="number" id="setup-adhoc-amt" value="100000" />
+          </div>
+          <div>
+            <label>Adhoc Month</label>
+            <select id="setup-adhoc-month">
+              <option value="3">March (tax refund)</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="12">December (year-end bonus)</option>
+              <option value="1">January</option>
+            </select>
+          </div>
+          <div>
+            <label>Number of Adhoc Years</label>
+            <input type="number" id="setup-adhoc-years" value="3" />
+          </div>
+        </div>
+        <button onclick="saveSetup()">Save Adhoc Plan</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- TAB: PAYMENTS -->
+  <div class="tab-content" id="tab-payments">
+    <section>
+      <h2>Log a Payment <span class="num">§ III</span></h2>
+      <div class="card">
+        <div class="row-4">
+          <div>
+            <label>Date</label>
+            <input type="date" id="pay-date" />
+          </div>
+          <div>
+            <label>Amount (₹)</label>
+            <input type="number" id="pay-amount" placeholder="30000" />
+          </div>
+          <div>
+            <label>Type</label>
+            <select id="pay-type">
+              <option value="emi">Regular EMI</option>
+              <option value="adhoc">Adhoc / Prepayment</option>
+            </select>
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button onclick="addPayment()">Add Payment</button>
+          </div>
+        </div>
+        <div class="info-box good">
+          <strong>Tip:</strong> Log every payment as it happens — including small adhoc amounts. The tool will compare your actual payments to the recommended plan and show you whether you're ahead or behind.
+        </div>
+      </div>
+
+      <h3>Payment History</h3>
+      <div class="card tight">
+        <div id="payments-list">
+          <div class="small-text center" style="padding: 20px;">No payments logged yet.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- TAB: DISBURSEMENTS -->
+  <div class="tab-content" id="tab-disbursements">
+    <section>
+      <h2>Future Disbursements <span class="num">§ IV</span></h2>
+      <div class="card">
+        <div class="row-3">
+          <div>
+            <label>Disbursement Date</label>
+            <input type="month" id="disb-date" />
+          </div>
+          <div>
+            <label>Amount (₹)</label>
+            <input type="number" id="disb-amount" placeholder="1200000" />
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button onclick="addDisbursement()">Add Disbursement</button>
+          </div>
+        </div>
+      </div>
+
+      <h3>Scheduled Disbursements</h3>
+      <div class="card tight">
+        <div id="disb-list">
+          <div class="small-text center" style="padding: 20px;">No disbursements scheduled.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- TAB: INVESTMENTS -->
+  <div class="tab-content" id="tab-investments">
+    <section>
+      <h2>Investment Tracker <span class="num">§ V</span></h2>
+      <div class="info-box">
+        <strong>Purpose:</strong> Track the side investments that will fund your adhoc payments and Phase 2 EMI cushion. Two pots: one for short-term adhoc (liquid/debt fund), one for long-term Phase 2 cushion (equity).
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <h3 class="mt-0">Adhoc Fund <span class="pill muted">Short-term · Debt</span></h3>
+          <div class="row">
+            <div>
+              <label>Current Corpus (₹)</label>
+              <input type="number" id="adhoc-corpus" value="100000" />
+            </div>
+            <div>
+              <label>Monthly SIP (₹)</label>
+              <input type="number" id="adhoc-sip" value="5000" />
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Expected Annual Return (%)</label>
+              <input type="number" id="adhoc-return" value="6.5" step="0.1" />
+            </div>
+            <div>
+              <label>&nbsp;</label>
+              <button onclick="saveInvestments()">Save</button>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div id="adhoc-projection"></div>
+        </div>
+
+        <div class="card">
+          <h3 class="mt-0">Long-term Cushion <span class="pill muted">4+ years · Equity</span></h3>
+          <div class="row">
+            <div>
+              <label>Current Corpus (₹)</label>
+              <input type="number" id="lt-corpus" value="0" />
+            </div>
+            <div>
+              <label>Monthly SIP (₹)</label>
+              <input type="number" id="lt-sip" value="3000" />
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Expected Annual Return (%)</label>
+              <input type="number" id="lt-return" value="11" step="0.1" />
+            </div>
+            <div>
+              <label>&nbsp;</label>
+              <button onclick="saveInvestments()">Save</button>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div id="lt-projection"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- TAB: PROJECTION -->
+  <div class="tab-content" id="tab-projection">
+    <section>
+      <h2>Month-by-Month Projection <span class="num">§ VI</span></h2>
+
+      <div class="card">
+        <div id="projection-summary"></div>
+      </div>
+
+      <h3>Detailed Schedule</h3>
+      <div class="table-scroll">
+        <table id="projection-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th class="mono">Opening</th>
+              <th class="mono">Interest</th>
+              <th class="mono">Disburse</th>
+              <th class="mono">EMI</th>
+              <th class="mono">Adhoc</th>
+              <th class="mono">Closing</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="projection-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- TAB: SCENARIOS -->
+  <div class="tab-content" id="tab-scenarios">
+    <section>
+      <h2>Scenario Comparison <span class="num">§ VII</span></h2>
+      <div class="info-box">
+        Adjust each lever and see the impact on your loan-free date and total interest paid.
+      </div>
+
+      <div class="card">
+        <table id="scenarios-table">
+          <thead>
+            <tr>
+              <th>Scenario</th>
+              <th>Phase 2 EMI</th>
+              <th>Buffer</th>
+              <th>Annual Adhoc</th>
+              <th>Loan-free by</th>
+              <th>Total Interest</th>
+              <th>vs Current Plan</th>
+            </tr>
+          </thead>
+          <tbody id="scenarios-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="ornament">·  ·  ·</div>
+
+  <footer>
+    Data is stored locally in your browser. Use Export to back up. Built with patience, May 2026.
+  </footer>
+</div>
+
+<script>
+// =================================================================
+// STATE & STORAGE
+// =================================================================
+let state = {
+  setup: {
+    balance: 4715469,
+    rate: 7.35,
+    asOf: '2026-05',
+    moratoriumEnd: '2029-12',
+    phase2Emi: 100000,
+    surplus: 1000,
+    adhocAmount: 100000,
+    adhocMonth: 3,
+    adhocYears: 3,
+  },
+  payments: [],
+  disbursements: [
+    { date: '2026-09', amount: 1200000 },
+    { date: '2027-01', amount: 1200000 },
+    { date: '2027-05', amount: 650000 },
+    { date: '2027-09', amount: 1200000 },
+  ],
+  investments: {
+    adhocCorpus: 100000,
+    adhocSip: 5000,
+    adhocReturn: 6.5,
+    ltCorpus: 0,
+    ltSip: 3000,
+    ltReturn: 11,
+  },
+};
+
+const STORAGE_KEY = 'loan-tracker-data-v1';
+
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { console.warn('Save failed', e); }
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const loaded = JSON.parse(raw);
+      state = { ...state, ...loaded, setup: { ...state.setup, ...loaded.setup }, investments: { ...state.investments, ...(loaded.investments || {}) } };
+    }
+  } catch (e) { console.warn('Load failed', e); }
+}
+
+// =================================================================
+// FORMATTING HELPERS
+// =================================================================
+function fmtINR(n, decimals = 0) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const sign = n < 0 ? '-' : '';
+  n = Math.abs(n);
+  const parts = n.toFixed(decimals).split('.');
+  let intPart = parts[0];
+  // Indian numbering
+  const lastThree = intPart.length > 3 ? intPart.slice(-3) : intPart;
+  const rest = intPart.length > 3 ? intPart.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ',') : '';
+  intPart = rest ? rest + ',' + lastThree : lastThree;
+  return sign + '₹' + intPart + (parts[1] ? '.' + parts[1] : '');
+}
+
+function fmtMonth(yyyymm) {
+  const [y, m] = yyyymm.split('-').map(Number);
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1] + ' ' + y;
+}
+
+function monthsBetween(from, to) {
+  const [y1, m1] = from.split('-').map(Number);
+  const [y2, m2] = to.split('-').map(Number);
+  return (y2 - y1) * 12 + (m2 - m1);
+}
+
+function addMonths(yyyymm, n) {
+  const [y, m] = yyyymm.split('-').map(Number);
+  let totalMonth = (y * 12 + (m - 1)) + n;
+  const newY = Math.floor(totalMonth / 12);
+  const newM = (totalMonth % 12) + 1;
+  return newY + '-' + String(newM).padStart(2, '0');
+}
+
+// =================================================================
+// CORE CALCULATIONS
+// =================================================================
+function monthlyRate() { return state.setup.rate / 100 / 12; }
+
+function recommendedEmi(balance) {
+  const interest = balance * monthlyRate();
+  const target = interest + state.setup.surplus;
+  // Round to nearest 500, but never below interest (would mean balance grows)
+  let emi = Math.round(target / 500) * 500;
+  if (emi < interest) emi = Math.ceil(interest / 500) * 500 + 500;
+  return emi;
+}
+
+function buildProjection() {
+  const months = [];
+  let balance = state.setup.balance;
+  let asOf = state.setup.asOf;
+  let currentEmi = recommendedEmi(balance);
+  const moratEnd = state.setup.moratoriumEnd;
+
+  // Build map of disbursements by month
+  const disbMap = {};
+  state.disbursements.forEach(d => { disbMap[d.date] = (disbMap[d.date] || 0) + d.amount; });
+
+  // Build map of payments by month (actual)
+  const paymentsMap = {};
+  state.payments.forEach(p => {
+    const m = p.date.substring(0, 7);
+    if (!paymentsMap[m]) paymentsMap[m] = { emi: 0, adhoc: 0 };
+    if (p.type === 'adhoc') paymentsMap[m].adhoc += p.amount;
+    else paymentsMap[m].emi += p.amount;
+  });
+
+  // Determine adhoc schedule months
+  const adhocMonthsSet = new Set();
+  if (state.setup.adhocAmount > 0 && state.setup.adhocYears > 0) {
+    // First adhoc: in adhocMonth of year following the asOf year (or same year if month not yet passed)
+    const [y, m] = asOf.split('-').map(Number);
+    let firstYear = y;
+    if (state.setup.adhocMonth <= m) firstYear = y + 1;
+    for (let i = 0; i < state.setup.adhocYears; i++) {
+      const yr = firstYear + i;
+      adhocMonthsSet.add(yr + '-' + String(state.setup.adhocMonth).padStart(2, '0'));
+    }
+  }
+
+  // Project from asOf for max 240 months or until paid off
+  let cursor = asOf;
+  const today = new Date();
+  const todayMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+
+  for (let i = 0; i < 240; i++) {
+    if (balance <= 0) break;
+
+    const inMoratorium = monthsBetween(cursor, moratEnd) > 0;
+    const isPast = monthsBetween(cursor, todayMonth) >= 0 && cursor !== todayMonth ? false : (monthsBetween(cursor, todayMonth) > 0);
+    const isFuture = monthsBetween(cursor, todayMonth) < 0;
+
+    const opening = balance;
+    const interest = balance * monthlyRate();
+    balance += interest;
+
+    const disbAmount = disbMap[cursor] || 0;
+    if (disbAmount > 0) {
+      balance += disbAmount;
+      // Recompute recommended EMI after disbursement (still in moratorium)
+      if (inMoratorium) currentEmi = recommendedEmi(balance);
+    }
+
+    // After moratorium, switch to phase2 EMI
+    let plannedEmi;
+    if (inMoratorium) {
+      plannedEmi = currentEmi;
+    } else {
+      plannedEmi = state.setup.phase2Emi;
+    }
+
+    // Check if there's actual payment for this month
+    const actual = paymentsMap[cursor];
+    let emiPaid, adhocPaid, isActual;
+    if (actual) {
+      emiPaid = actual.emi;
+      adhocPaid = actual.adhoc;
+      isActual = true;
+    } else {
+      emiPaid = Math.min(plannedEmi, balance);
+      adhocPaid = adhocMonthsSet.has(cursor) ? state.setup.adhocAmount : 0;
+      isActual = false;
+    }
+
+    balance -= emiPaid;
+    balance -= adhocPaid;
+    if (balance < 0) { adhocPaid += balance; balance = 0; } // adjust if overpaid
+
+    months.push({
+      month: cursor,
+      opening,
+      interest,
+      disbursement: disbAmount,
+      emi: emiPaid,
+      adhoc: adhocPaid,
+      closing: balance,
+      isActual,
+      inMoratorium,
+      plannedEmi,
+    });
+
+    cursor = addMonths(cursor, 1);
+  }
+
+  return months;
+}
+
+// =================================================================
+// RENDER
+// =================================================================
+function renderHero() {
+  const proj = buildProjection();
+  const today = new Date();
+  const todayMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+
+  // Find current month row (or asOf month)
+  const currentRow = proj.find(p => p.month === todayMonth) || proj.find(p => p.month === state.setup.asOf) || proj[0];
+  if (!currentRow) return;
+
+  const balance = state.setup.balance;
+  const interest = balance * monthlyRate();
+  const recEmi = recommendedEmi(balance);
+
+  document.getElementById('hero-balance').textContent = fmtINR(balance);
+  document.getElementById('hero-balance-sub').textContent = 'as of ' + fmtMonth(state.setup.asOf);
+  document.getElementById('hero-interest').textContent = fmtINR(interest);
+  document.getElementById('hero-emi').textContent = fmtINR(recEmi);
+
+  // Plan status: compare last 3 months of actual vs recommended
+  const recentActual = state.payments.filter(p => {
+    const monthDiff = monthsBetween(p.date.substring(0,7), todayMonth);
+    return monthDiff >= 0 && monthDiff <= 3;
+  });
+
+  const lastMonthPayments = recentActual.reduce((s, p) => s + p.amount, 0);
+  const heroStatusBlock = document.getElementById('hero-status-block');
+  const heroStatus = document.getElementById('hero-status');
+  const heroStatusSub = document.getElementById('hero-status-sub');
+
+  if (state.payments.length === 0) {
+    heroStatus.textContent = 'New';
+    heroStatusSub.textContent = 'log first payment';
+    heroStatusBlock.classList.remove('good','warn','bad');
+  } else if (lastMonthPayments >= recEmi) {
+    heroStatus.textContent = 'On Track';
+    heroStatusSub.textContent = 'paying enough';
+    heroStatusBlock.classList.remove('warn','bad');
+    heroStatusBlock.classList.add('good');
+  } else if (lastMonthPayments >= interest) {
+    heroStatus.textContent = 'Holding';
+    heroStatusSub.textContent = 'covering interest';
+    heroStatusBlock.classList.remove('good','bad');
+    heroStatusBlock.classList.add('warn');
+  } else {
+    heroStatus.textContent = 'Behind';
+    heroStatusSub.textContent = 'balance growing';
+    heroStatusBlock.classList.remove('good','warn');
+    heroStatusBlock.classList.add('bad');
+  }
+}
+
+function renderPayments() {
+  const list = document.getElementById('payments-list');
+  if (state.payments.length === 0) {
+    list.innerHTML = '<div class="small-text center" style="padding: 20px;">No payments logged yet.</div>';
+    return;
+  }
+
+  const sorted = [...state.payments].sort((a, b) => b.date.localeCompare(a.date));
+
+  // Group by month
+  const byMonth = {};
+  sorted.forEach(p => {
+    const m = p.date.substring(0, 7);
+    if (!byMonth[m]) byMonth[m] = [];
+    byMonth[m].push(p);
+  });
+
+  let html = '';
+  Object.keys(byMonth).sort().reverse().forEach(m => {
+    const items = byMonth[m];
+    const total = items.reduce((s, p) => s + p.amount, 0);
+    const interest = state.setup.balance * monthlyRate(); // approx, for comparison
+    const status = total >= interest * 1.05 ? 'good' : total >= interest ? 'warn' : 'bad';
+    const statusText = total >= interest * 1.05 ? 'reducing' : total >= interest ? 'holding' : 'short';
+
+    html += '<div style="border-bottom: 1px solid var(--rule-soft); padding: 10px 0;">';
+    html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">';
+    html += '<div style="font-weight: 500;">' + fmtMonth(m) + ' &middot; <span class="currency">' + fmtINR(total) + '</span> <span class="pill ' + status + '">' + statusText + '</span></div>';
+    html += '</div>';
+    items.forEach(p => {
+      html += '<div class="list-item">';
+      html += '<div><span class="meta">' + p.date + ' &middot; ' + p.type + '</span></div>';
+      html += '<div class="gap-row"><span class="amount">' + fmtINR(p.amount) + '</span><button class="icon" onclick="deletePayment(\'' + p.id + '\')">×</button></div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+
+  list.innerHTML = html;
+}
+
+function renderDisbursements() {
+  const list = document.getElementById('disb-list');
+  if (state.disbursements.length === 0) {
+    list.innerHTML = '<div class="small-text center" style="padding: 20px;">No disbursements scheduled.</div>';
+    return;
+  }
+  const sorted = [...state.disbursements].sort((a, b) => a.date.localeCompare(b.date));
+  let html = '';
+  sorted.forEach((d, idx) => {
+    html += '<div class="list-item">';
+    html += '<div><strong>' + fmtMonth(d.date) + '</strong></div>';
+    html += '<div class="gap-row"><span class="amount">' + fmtINR(d.amount) + '</span><button class="icon" onclick="deleteDisbursement(' + idx + ')">×</button></div>';
+    html += '</div>';
+  });
+  list.innerHTML = html;
+}
+
+function renderInvestments() {
+  const inv = state.investments;
+  // Adhoc fund projection
+  const r1 = inv.adhocReturn / 100 / 12;
+  let corpus = inv.adhocCorpus;
+  // Project monthly with SIP for 36 months, withdrawing 1L each March
+  const adhocAmt = state.setup.adhocAmount;
+  const adhocMonth = state.setup.adhocMonth;
+  const adhocYears = state.setup.adhocYears;
+  const [yStart, mStart] = state.setup.asOf.split('-').map(Number);
+
+  let log1 = '<div class="small-text" style="margin-bottom: 8px;">Projection: monthly SIP added, ' + fmtINR(adhocAmt) + ' withdrawn each ' + ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][adhocMonth] + '</div>';
+  log1 += '<table style="width: 100%;"><thead><tr><th>Month</th><th class="mono">Corpus</th><th>Action</th></tr></thead><tbody>';
+
+  let withdrawalsLeft = adhocYears;
+  for (let i = 0; i < 48 && withdrawalsLeft > 0; i++) {
+    corpus = corpus * (1 + r1) + inv.adhocSip;
+    const totalMonths = (yStart * 12 + mStart - 1) + i + 1;
+    const yr = Math.floor(totalMonths / 12);
+    const mo = (totalMonths % 12) + 1;
+    let action = '+SIP';
+    if (mo === adhocMonth && i > 0) {
+      if (corpus >= adhocAmt) {
+        corpus -= adhocAmt;
+        action = '−' + fmtINR(adhocAmt) + ' adhoc';
+        withdrawalsLeft--;
+      } else {
+        action = '<span class="text-bad">SHORT</span>';
+      }
+    }
+    if (action !== '+SIP' || i % 6 === 0 || i < 3) {
+      log1 += '<tr' + (action.includes('adhoc') ? ' class="adhoc-row"' : '') + '><td>' + fmtMonth(yr + '-' + String(mo).padStart(2, '0')) + '</td><td class="mono">' + fmtINR(corpus) + '</td><td>' + action + '</td></tr>';
+    }
+  }
+  log1 += '</tbody></table>';
+  document.getElementById('adhoc-projection').innerHTML = log1;
+
+  // Long-term projection (just compound)
+  const r2 = inv.ltReturn / 100 / 12;
+  let lt = inv.ltCorpus;
+  const moratMonths = monthsBetween(state.setup.asOf, state.setup.moratoriumEnd);
+  let log2 = '<div class="small-text" style="margin-bottom: 8px;">Compound growth at ' + inv.ltReturn + '% with monthly SIP of ' + fmtINR(inv.ltSip) + '</div>';
+  log2 += '<table style="width: 100%;"><thead><tr><th>Year</th><th class="mono">Corpus</th></tr></thead><tbody>';
+  for (let i = 0; i < moratMonths + 60; i++) {
+    lt = lt * (1 + r2) + inv.ltSip;
+    if ((i + 1) % 12 === 0) {
+      const yr = yStart + Math.floor((mStart - 1 + i + 1) / 12);
+      log2 += '<tr><td>' + fmtMonth(yr + '-' + String(((mStart - 1 + i + 1) % 12) + 1).padStart(2, '0')) + '</td><td class="mono">' + fmtINR(lt) + '</td></tr>';
+    }
+  }
+  log2 += '</tbody></table>';
+  document.getElementById('lt-projection').innerHTML = log2;
+}
+
+function renderProjection() {
+  const proj = buildProjection();
+  const tbody = document.getElementById('projection-tbody');
+  const today = new Date();
+  const todayMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+
+  let html = '';
+  proj.forEach(row => {
+    let cls = '';
+    if (row.disbursement > 0) cls = 'disbursement-row';
+    else if (row.adhoc > 0) cls = 'adhoc-row';
+    else if (row.isActual) cls = 'actual-row';
+    else if (monthsBetween(row.month, todayMonth) < 0) cls = 'future-row';
+
+    let notes = [];
+    if (row.disbursement > 0) notes.push('disbursement');
+    if (row.adhoc > 0) notes.push('adhoc');
+    if (row.isActual) notes.push('actual');
+    if (!row.inMoratorium) notes.push('phase 2');
+
+    html += '<tr class="' + cls + '">';
+    html += '<td>' + fmtMonth(row.month) + '</td>';
+    html += '<td class="mono">' + fmtINR(row.opening) + '</td>';
+    html += '<td class="mono">' + fmtINR(row.interest) + '</td>';
+    html += '<td class="mono">' + (row.disbursement ? fmtINR(row.disbursement) : '—') + '</td>';
+    html += '<td class="mono">' + fmtINR(row.emi) + '</td>';
+    html += '<td class="mono">' + (row.adhoc ? fmtINR(row.adhoc) : '—') + '</td>';
+    html += '<td class="mono">' + fmtINR(row.closing) + '</td>';
+    html += '<td><span class="small-text">' + notes.join(' · ') + '</span></td>';
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
+
+  // Summary
+  const totalEmi = proj.reduce((s, r) => s + r.emi, 0);
+  const totalAdhoc = proj.reduce((s, r) => s + r.adhoc, 0);
+  const totalInterest = proj.reduce((s, r) => s + r.interest, 0);
+  const totalDisb = proj.reduce((s, r) => s + r.disbursement, 0);
+  const lastMonth = proj[proj.length - 1];
+  const startBal = state.setup.balance;
+  const finalBal = lastMonth ? lastMonth.closing : 0;
+
+  let summary = '<div class="row-4">';
+  summary += '<div class="stat-block"><div class="label">Months to Payoff</div><div class="value currency">' + (proj.length) + '</div><div class="sub">' + (proj.length / 12).toFixed(1) + ' years</div></div>';
+  summary += '<div class="stat-block"><div class="label">Loan-Free By</div><div class="value" style="font-size: 22px;">' + (lastMonth ? fmtMonth(lastMonth.month) : '—') + '</div></div>';
+  summary += '<div class="stat-block accent"><div class="label">Total Interest</div><div class="value currency">' + fmtINR(totalInterest) + '</div></div>';
+  summary += '<div class="stat-block good"><div class="label">Total You\'ll Pay</div><div class="value currency">' + fmtINR(totalEmi + totalAdhoc) + '</div></div>';
+  summary += '</div>';
+  summary += '<div class="info-box">Starting balance ' + fmtINR(startBal) + ' + future disbursements ' + fmtINR(totalDisb) + ' + interest ' + fmtINR(totalInterest) + ' = total bank charges, repaid via ' + fmtINR(totalEmi) + ' EMI + ' + fmtINR(totalAdhoc) + ' adhoc.</div>';
+  document.getElementById('projection-summary').innerHTML = summary;
+}
+
+function renderScenarios() {
+  // Run multiple scenarios to compare
+  const baseConfig = JSON.parse(JSON.stringify(state.setup));
+  const scenarios = [
+    { name: 'Current Plan', overrides: {} },
+    { name: 'Phase 2 EMI ₹1.25L', overrides: { phase2Emi: 125000 } },
+    { name: 'Phase 2 EMI ₹1.5L', overrides: { phase2Emi: 150000 } },
+    { name: 'No Adhoc', overrides: { adhocAmount: 0 } },
+    { name: 'Adhoc ₹2L/yr × 3', overrides: { adhocAmount: 200000 } },
+    { name: 'Higher Buffer ₹5k', overrides: { surplus: 5000 } },
+    { name: 'No Buffer (Just Cover)', overrides: { surplus: 0 } },
+  ];
+
+  const results = [];
+  scenarios.forEach(s => {
+    state.setup = { ...baseConfig, ...s.overrides };
+    const proj = buildProjection();
+    const totalInt = proj.reduce((sum, r) => sum + r.interest, 0);
+    const lastMonth = proj[proj.length - 1];
+    results.push({
+      name: s.name,
+      phase2Emi: state.setup.phase2Emi,
+      buffer: state.setup.surplus,
+      adhoc: state.setup.adhocAmount,
+      months: proj.length,
+      lastMonth: lastMonth ? lastMonth.month : '',
+      totalInterest: totalInt,
+    });
+  });
+  state.setup = baseConfig;
+
+  const baseInt = results[0].totalInterest;
+  let html = '';
+  results.forEach((r, idx) => {
+    const diff = baseInt - r.totalInterest;
+    const diffStr = idx === 0 ? '<span class="text-muted">(base)</span>' :
+      (diff > 0 ? '<span class="text-good">−' + fmtINR(diff) + '</span>' : '<span class="text-bad">+' + fmtINR(-diff) + '</span>');
+    html += '<tr' + (idx === 0 ? ' style="background: var(--rule-soft);"' : '') + '>';
+    html += '<td>' + r.name + '</td>';
+    html += '<td class="mono">' + fmtINR(r.phase2Emi) + '</td>';
+    html += '<td class="mono">' + fmtINR(r.buffer) + '</td>';
+    html += '<td class="mono">' + fmtINR(r.adhoc) + '</td>';
+    html += '<td>' + (r.lastMonth ? fmtMonth(r.lastMonth) : '—') + '</td>';
+    html += '<td class="mono">' + fmtINR(r.totalInterest) + '</td>';
+    html += '<td class="mono">' + diffStr + '</td>';
+    html += '</tr>';
+  });
+  document.getElementById('scenarios-tbody').innerHTML = html;
+}
+
+function renderAll() {
+  renderHero();
+  renderPayments();
+  renderDisbursements();
+  renderInvestments();
+  renderProjection();
+  renderScenarios();
+}
+
+// =================================================================
+// ACTIONS
+// =================================================================
+function saveSetup() {
+  state.setup.balance = parseFloat(document.getElementById('setup-balance').value) || 0;
+  state.setup.rate = parseFloat(document.getElementById('setup-rate').value) || 0;
+  state.setup.asOf = document.getElementById('setup-asof').value;
+  state.setup.moratoriumEnd = document.getElementById('setup-morat-end').value;
+  state.setup.phase2Emi = parseFloat(document.getElementById('setup-phase2-emi').value) || 0;
+  state.setup.surplus = parseFloat(document.getElementById('setup-surplus').value) || 0;
+  state.setup.adhocAmount = parseFloat(document.getElementById('setup-adhoc-amt').value) || 0;
+  state.setup.adhocMonth = parseInt(document.getElementById('setup-adhoc-month').value);
+  state.setup.adhocYears = parseInt(document.getElementById('setup-adhoc-years').value) || 0;
+  save(); renderAll();
+}
+
+function saveInvestments() {
+  state.investments.adhocCorpus = parseFloat(document.getElementById('adhoc-corpus').value) || 0;
+  state.investments.adhocSip = parseFloat(document.getElementById('adhoc-sip').value) || 0;
+  state.investments.adhocReturn = parseFloat(document.getElementById('adhoc-return').value) || 0;
+  state.investments.ltCorpus = parseFloat(document.getElementById('lt-corpus').value) || 0;
+  state.investments.ltSip = parseFloat(document.getElementById('lt-sip').value) || 0;
+  state.investments.ltReturn = parseFloat(document.getElementById('lt-return').value) || 0;
+  save(); renderInvestments();
+}
+
+function addPayment() {
+  const date = document.getElementById('pay-date').value;
+  const amount = parseFloat(document.getElementById('pay-amount').value);
+  const type = document.getElementById('pay-type').value;
+  if (!date || !amount) { alert('Please enter date and amount'); return; }
+  state.payments.push({ id: Date.now() + '-' + Math.random().toString(36).substr(2, 5), date, amount, type });
+  document.getElementById('pay-amount').value = '';
+  save(); renderAll();
+}
+
+function deletePayment(id) {
+  state.payments = state.payments.filter(p => p.id !== id);
+  save(); renderAll();
+}
+
+function addDisbursement() {
+  const date = document.getElementById('disb-date').value;
+  const amount = parseFloat(document.getElementById('disb-amount').value);
+  if (!date || !amount) { alert('Please enter date and amount'); return; }
+  state.disbursements.push({ date, amount });
+  document.getElementById('disb-date').value = '';
+  document.getElementById('disb-amount').value = '';
+  save(); renderAll();
+}
+
+function deleteDisbursement(idx) {
+  state.disbursements.splice(idx, 1);
+  save(); renderAll();
+}
+
+function exportData() {
+  const data = JSON.stringify(state, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'loan-tracker-' + new Date().toISOString().substring(0, 10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        state = imported;
+        save(); populateForm(); renderAll();
+        alert('Data imported successfully');
+      } catch (err) { alert('Import failed: ' + err.message); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function resetAll() {
+  if (!confirm('This will delete all your data. Continue?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+}
+
+function switchTab(btn, contentId) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(contentId).classList.add('active');
+}
+
+function populateForm() {
+  document.getElementById('setup-balance').value = state.setup.balance;
+  document.getElementById('setup-rate').value = state.setup.rate;
+  document.getElementById('setup-asof').value = state.setup.asOf;
+  document.getElementById('setup-morat-end').value = state.setup.moratoriumEnd;
+  document.getElementById('setup-phase2-emi').value = state.setup.phase2Emi;
+  document.getElementById('setup-surplus').value = state.setup.surplus;
+  document.getElementById('setup-adhoc-amt').value = state.setup.adhocAmount;
+  document.getElementById('setup-adhoc-month').value = state.setup.adhocMonth;
+  document.getElementById('setup-adhoc-years').value = state.setup.adhocYears;
+  document.getElementById('adhoc-corpus').value = state.investments.adhocCorpus;
+  document.getElementById('adhoc-sip').value = state.investments.adhocSip;
+  document.getElementById('adhoc-return').value = state.investments.adhocReturn;
+  document.getElementById('lt-corpus').value = state.investments.ltCorpus;
+  document.getElementById('lt-sip').value = state.investments.ltSip;
+  document.getElementById('lt-return').value = state.investments.ltReturn;
+
+  // Default payment date to today
+  document.getElementById('pay-date').value = new Date().toISOString().substring(0, 10);
+}
+
+// =================================================================
+// INIT
+// =================================================================
+load();
+populateForm();
+renderAll();
+
+</script>
+</body>
+</html>
