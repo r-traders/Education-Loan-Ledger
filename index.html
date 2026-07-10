@@ -495,6 +495,7 @@
   <div class="tab-content" id="tab-reminders">
     <section>
       <h2>Reminders &amp; Milestones <span class="num">§ II</span></h2>
+      <div id="reminders-total" class="info-box"></div>
 
       <div class="card">
         <div id="upcoming-reminders"></div>
@@ -575,6 +576,7 @@
         <div id="payments-list">
           <div class="small-text center" style="padding: 20px;">No payments logged yet.</div>
         </div>
+        <div id="payments-total"></div>
       </div>
     </section>
   </div>
@@ -614,6 +616,7 @@
   <div class="tab-content" id="tab-investments">
     <section>
       <h2>Investment Tracker <span class="num">§ V</span></h2>
+      <div id="invest-total" class="info-box"></div>
       <div class="info-box">
         <strong>Purpose:</strong> Track the side investments that will fund your adhoc payments and Phase 2 EMI cushion. Two pots: one for short-term adhoc (liquid/debt fund), one for long-term Phase 2 cushion (equity).
       </div>
@@ -709,6 +712,7 @@
             </tr>
           </thead>
           <tbody id="projection-tbody"></tbody>
+          <tfoot id="projection-tfoot"></tfoot>
         </table>
       </div>
     </section>
@@ -791,14 +795,18 @@
             <input type="month" id="univ-date" />
           </div>
           <div>
-            <label>Amount (₹)</label>
-            <input type="number" id="univ-amount" placeholder="500000" />
+            <label>Currency</label>
+            <select id="univ-currency">
+              <option value="INR">₹ INR</option>
+              <option value="CAD">C$ CAD</option>
+            </select>
           </div>
           <div>
-            <label>&nbsp;</label>
-            <button onclick="addUniversityFee()">Add Fee</button>
+            <label>Amount</label>
+            <input type="number" id="univ-amount" placeholder="500000" />
           </div>
         </div>
+        <button onclick="addUniversityFee()">Add Fee</button>
       </div>
 
       <h3>Recorded Fees</h3>
@@ -895,6 +903,15 @@ function fmtINR(n, decimals = 0) {
   return sign + '₹' + intPart + (parts[1] ? '.' + parts[1] : '');
 }
 
+function fmtCAD(n, decimals = 0) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const sign = n < 0 ? '-' : '';
+  n = Math.abs(n);
+  const parts = n.toFixed(decimals).split('.');
+  const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return sign + 'C$' + intPart + (parts[1] ? '.' + parts[1] : '');
+}
+function fmtFee(n, cur) { return cur === 'CAD' ? fmtCAD(n) : fmtINR(n); }
 function fmtMonth(yyyymm) {
   const [y, m] = yyyymm.split('-').map(Number);
   return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1] + ' ' + y;
@@ -1086,6 +1103,14 @@ function renderHero() {
 
 function renderPayments() {
   const list = document.getElementById('payments-list');
+  const payAll = state.payments.reduce((s, p) => s + (p.amount || 0), 0);
+  const payEmi = state.payments.filter(p => p.type === 'emi').reduce((s, p) => s + (p.amount || 0), 0);
+  const payAdhoc = state.payments.filter(p => p.type === 'adhoc').reduce((s, p) => s + (p.amount || 0), 0);
+  const payTotEl = document.getElementById('payments-total');
+  if (payTotEl) payTotEl.innerHTML =
+    '<div class="list-item" style="border-top: 2px solid var(--rule);"><div><strong>Total paid</strong></div><div class="amount"><strong>' + fmtINR(payAll) + '</strong></div></div>' +
+    '<div class="list-item"><div><span class="small-text">Regular EMI</span></div><div class="amount">' + fmtINR(payEmi) + '</div></div>' +
+    '<div class="list-item"><div><span class="small-text">Adhoc / Prepayment</span></div><div class="amount">' + fmtINR(payAdhoc) + '</div></div>';
   if (state.payments.length === 0) {
     list.innerHTML = '<div class="small-text center" style="padding: 20px;">No payments logged yet.</div>';
     return;
@@ -1210,6 +1235,9 @@ function renderInvestments() {
     log2 += '<div class="info-box good" style="margin-top: 10px; font-size: 12px;">Available for one-time prepayment when Phase 2 starts: <strong>~' + fmtINR(ltAtMoratEnd) + '</strong>. This could shorten your Phase 2 by several months.</div>';
   }
   document.getElementById('lt-projection').innerHTML = log2;
+
+  const investTotEl = document.getElementById('invest-total');
+  if (investTotEl) investTotEl.innerHTML = '<strong>Totals now:</strong> combined corpus ' + fmtINR(inv.adhocCorpus + inv.ltCorpus) + ' &middot; combined monthly SIP ' + fmtINR(inv.adhocSip + inv.ltSip);
 }
 
 function renderProjection() {
@@ -1277,6 +1305,19 @@ function renderProjection() {
   summary += '<div class="stat-block good"><div class="label">Total You\'ll Pay</div><div class="value currency">' + fmtINR(totalEmi + totalAdhoc) + '</div></div>';
   summary += '</div>';
   summary += '<div class="info-box">Starting balance ' + fmtINR(startBal) + ' + future disbursements ' + fmtINR(totalDisb) + ' + interest ' + fmtINR(totalInterest) + ' = total bank charges, repaid via ' + fmtINR(totalEmi) + ' EMI + ' + fmtINR(totalAdhoc) + ' adhoc.</div>';
+  const projTfoot = document.getElementById('projection-tfoot');
+  if (projTfoot) {
+    const totalToPrincipal = proj.reduce((s, r) => s + (r.emi - r.interest), 0);
+    projTfoot.innerHTML = '<tr style="border-top: 2px solid var(--rule); font-weight: 600;">' +
+      '<td>Total</td><td class="mono">—</td>' +
+      '<td class="mono">' + fmtINR(totalInterest) + '</td>' +
+      '<td class="mono">' + fmtINR(totalDisb) + '</td>' +
+      '<td class="mono">' + fmtINR(totalEmi) + '</td>' +
+      '<td class="mono">' + fmtINR(totalAdhoc) + '</td>' +
+      '<td class="mono">—</td>' +
+      '<td class="mono">' + fmtINR(totalToPrincipal) + '</td>' +
+      '<td></td></tr>';
+  }
   document.getElementById('projection-summary').innerHTML = summary;
 }
 
@@ -1441,6 +1482,12 @@ function renderReminders() {
   }
   document.getElementById('upcoming-reminders').innerHTML = upcomingHtml;
 
+  const remTotEl = document.getElementById('reminders-total');
+  if (remTotEl) {
+    const doneCount = all.filter(r => state.completedReminders[r.id]).length;
+    remTotEl.innerHTML = '<strong>Total milestones:</strong> ' + all.length + ' &middot; completed ' + doneCount + ' &middot; pending ' + (all.length - doneCount);
+  }
+
   // All milestones list
   let listHtml = '';
   if (all.length === 0) {
@@ -1559,29 +1606,41 @@ function deleteDisbursement(idx) {
 
 function renderUniversityFees() {
   const list = document.getElementById('univ-list');
-  const total = state.universityFees.reduce((s, d) => s + (d.amount || 0), 0);
+  let totalINR = 0, totalCAD = 0;
+  state.universityFees.forEach(d => {
+    if ((d.currency || 'INR') === 'CAD') totalCAD += (d.amount || 0);
+    else totalINR += (d.amount || 0);
+  });
   if (state.universityFees.length === 0) {
     list.innerHTML = '<div class="small-text center" style="padding: 20px;">No university fees added.</div>';
   } else {
     const sorted = [...state.universityFees].sort((a, b) => a.date.localeCompare(b.date));
     let html = '';
-    sorted.forEach((d, idx) => {
+    sorted.forEach((d) => {
+      const realIdx = state.universityFees.indexOf(d);
+      const cur = d.currency || 'INR';
       html += '<div class="list-item">';
-      html += '<div><strong>' + fmtMonth(d.date) + '</strong></div>';
-      html += '<div class="gap-row"><span class="amount">' + fmtINR(d.amount) + '</span><button class="icon" onclick="deleteUniversityFee(' + idx + ')">×</button></div>';
+      html += '<div><strong>' + fmtMonth(d.date) + '</strong> <span class="small-text">' + cur + '</span></div>';
+      html += '<div class="gap-row"><span class="amount">' + fmtFee(d.amount, cur) + '</span><button class="icon" onclick="deleteUniversityFee(' + realIdx + ')">×</button></div>';
       html += '</div>';
     });
     list.innerHTML = html;
   }
   const t = document.getElementById('univ-total');
-  if (t) t.innerHTML = '<div class="list-item" style="border-top: 2px solid var(--rule);"><div><strong>Total</strong></div><div class="amount"><strong>' + fmtINR(total) + '</strong></div></div>';
+  if (t) {
+    let h = '';
+    h += '<div class="list-item" style="border-top: 2px solid var(--rule);"><div><strong>Total (₹ INR)</strong></div><div class="amount"><strong>' + fmtINR(totalINR) + '</strong></div></div>';
+    h += '<div class="list-item"><div><strong>Total (C$ CAD)</strong></div><div class="amount"><strong>' + fmtCAD(totalCAD) + '</strong></div></div>';
+    t.innerHTML = h;
+  }
 }
 
 function addUniversityFee() {
   const date = document.getElementById('univ-date').value;
   const amount = parseFloat(document.getElementById('univ-amount').value);
+  const currency = document.getElementById('univ-currency').value || 'INR';
   if (!date || !amount) { alert('Please enter date and amount'); return; }
-  state.universityFees.push({ date, amount });
+  state.universityFees.push({ date, amount, currency });
   document.getElementById('univ-date').value = '';
   document.getElementById('univ-amount').value = '';
   save(); renderAll();
