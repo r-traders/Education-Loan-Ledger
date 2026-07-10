@@ -418,6 +418,7 @@
     <button class="tab" onclick="switchTab(this, 'tab-projection')">Projection</button>
     <button class="tab" onclick="switchTab(this, 'tab-scenarios')">Scenarios</button>
     <button class="tab" onclick="switchTab(this, 'tab-bank')">Bank &amp; Insurance</button>
+    <button class="tab" onclick="switchTab(this, 'tab-univ')">University Fees</button>
   </div>
 
   <!-- TAB: SETUP -->
@@ -604,6 +605,7 @@
         <div id="disb-list">
           <div class="small-text center" style="padding: 20px;">No disbursements scheduled.</div>
         </div>
+        <div id="disb-total"></div>
       </div>
     </section>
   </div>
@@ -778,6 +780,37 @@
     </section>
   </div>
 
+  <!-- TAB: UNIVERSITY FEES -->
+  <div class="tab-content" id="tab-univ">
+    <section>
+      <h2>University Fees <span class="num">§ IX</span></h2>
+      <div class="card">
+        <div class="row-3">
+          <div>
+            <label>Fee Date</label>
+            <input type="month" id="univ-date" />
+          </div>
+          <div>
+            <label>Amount (₹)</label>
+            <input type="number" id="univ-amount" placeholder="500000" />
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button onclick="addUniversityFee()">Add Fee</button>
+          </div>
+        </div>
+      </div>
+
+      <h3>Recorded Fees</h3>
+      <div class="card tight">
+        <div id="univ-list">
+          <div class="small-text center" style="padding: 20px;">No university fees added.</div>
+        </div>
+        <div id="univ-total"></div>
+      </div>
+    </section>
+  </div>
+
   <div class="ornament">·  ·  ·</div>
 
   <footer>
@@ -823,6 +856,7 @@ let state = {
     other: 0,
     notes: '',
   },
+  universityFees: [],
   customReminders: [],
   completedReminders: {},  // {reminderId: true}
 };
@@ -839,6 +873,7 @@ function load() {
       const loaded = JSON.parse(raw);
       state = { ...state, ...loaded, setup: { ...state.setup, ...loaded.setup }, investments: { ...state.investments, ...(loaded.investments || {}) }, bankInsurance: { ...state.bankInsurance, ...(loaded.bankInsurance || {}) } };
       if (!Array.isArray(state.customReminders)) state.customReminders = [];
+      if (!Array.isArray(state.universityFees)) state.universityFees = [];
       if (!state.completedReminders || typeof state.completedReminders !== 'object') state.completedReminders = {};
     }
   } catch (e) { console.warn('Load failed', e); }
@@ -1092,19 +1127,22 @@ function renderPayments() {
 
 function renderDisbursements() {
   const list = document.getElementById('disb-list');
+  const total = state.disbursements.reduce((s, d) => s + (d.amount || 0), 0);
   if (state.disbursements.length === 0) {
     list.innerHTML = '<div class="small-text center" style="padding: 20px;">No disbursements scheduled.</div>';
-    return;
+  } else {
+    const sorted = [...state.disbursements].sort((a, b) => a.date.localeCompare(b.date));
+    let html = '';
+    sorted.forEach((d, idx) => {
+      html += '<div class="list-item">';
+      html += '<div><strong>' + fmtMonth(d.date) + '</strong></div>';
+      html += '<div class="gap-row"><span class="amount">' + fmtINR(d.amount) + '</span><button class="icon" onclick="deleteDisbursement(' + idx + ')">×</button></div>';
+      html += '</div>';
+    });
+    list.innerHTML = html;
   }
-  const sorted = [...state.disbursements].sort((a, b) => a.date.localeCompare(b.date));
-  let html = '';
-  sorted.forEach((d, idx) => {
-    html += '<div class="list-item">';
-    html += '<div><strong>' + fmtMonth(d.date) + '</strong></div>';
-    html += '<div class="gap-row"><span class="amount">' + fmtINR(d.amount) + '</span><button class="icon" onclick="deleteDisbursement(' + idx + ')">×</button></div>';
-    html += '</div>';
-  });
-  list.innerHTML = html;
+  const t = document.getElementById('disb-total');
+  if (t) t.innerHTML = '<div class="list-item" style="border-top: 2px solid var(--rule);"><div><strong>Total</strong></div><div class="amount"><strong>' + fmtINR(total) + '</strong></div></div>';
 }
 
 function renderInvestments() {
@@ -1297,6 +1335,7 @@ function renderAll() {
   renderReminders();
   renderPayments();
   renderDisbursements();
+  renderUniversityFees();
   renderInvestments();
   renderProjection();
   renderScenarios();
@@ -1515,6 +1554,41 @@ function addDisbursement() {
 
 function deleteDisbursement(idx) {
   state.disbursements.splice(idx, 1);
+  save(); renderAll();
+}
+
+function renderUniversityFees() {
+  const list = document.getElementById('univ-list');
+  const total = state.universityFees.reduce((s, d) => s + (d.amount || 0), 0);
+  if (state.universityFees.length === 0) {
+    list.innerHTML = '<div class="small-text center" style="padding: 20px;">No university fees added.</div>';
+  } else {
+    const sorted = [...state.universityFees].sort((a, b) => a.date.localeCompare(b.date));
+    let html = '';
+    sorted.forEach((d, idx) => {
+      html += '<div class="list-item">';
+      html += '<div><strong>' + fmtMonth(d.date) + '</strong></div>';
+      html += '<div class="gap-row"><span class="amount">' + fmtINR(d.amount) + '</span><button class="icon" onclick="deleteUniversityFee(' + idx + ')">×</button></div>';
+      html += '</div>';
+    });
+    list.innerHTML = html;
+  }
+  const t = document.getElementById('univ-total');
+  if (t) t.innerHTML = '<div class="list-item" style="border-top: 2px solid var(--rule);"><div><strong>Total</strong></div><div class="amount"><strong>' + fmtINR(total) + '</strong></div></div>';
+}
+
+function addUniversityFee() {
+  const date = document.getElementById('univ-date').value;
+  const amount = parseFloat(document.getElementById('univ-amount').value);
+  if (!date || !amount) { alert('Please enter date and amount'); return; }
+  state.universityFees.push({ date, amount });
+  document.getElementById('univ-date').value = '';
+  document.getElementById('univ-amount').value = '';
+  save(); renderAll();
+}
+
+function deleteUniversityFee(idx) {
+  state.universityFees.splice(idx, 1);
   save(); renderAll();
 }
 
