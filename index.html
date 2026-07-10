@@ -809,6 +809,18 @@
         <button onclick="addUniversityFee()">Add Fee</button>
       </div>
 
+      <div class="card">
+        <div class="row-3">
+          <div>
+            <label>Exchange Rate (1 C$ = ₹)</label>
+            <input type="number" id="univ-fx" value="67.30" step="0.01" onchange="saveFx()" />
+          </div>
+          <div></div>
+          <div></div>
+        </div>
+        <div class="small-text">CAD fees are converted to INR at this rate for the grand total. Update it to your actual rate.</div>
+      </div>
+
       <h3>Recorded Fees</h3>
       <div class="card tight">
         <div id="univ-list">
@@ -865,6 +877,7 @@ let state = {
     notes: '',
   },
   universityFees: [],
+  fxCadInr: 67.30,
   customReminders: [],
   completedReminders: {},  // {reminderId: true}
 };
@@ -882,6 +895,7 @@ function load() {
       state = { ...state, ...loaded, setup: { ...state.setup, ...loaded.setup }, investments: { ...state.investments, ...(loaded.investments || {}) }, bankInsurance: { ...state.bankInsurance, ...(loaded.bankInsurance || {}) } };
       if (!Array.isArray(state.customReminders)) state.customReminders = [];
       if (!Array.isArray(state.universityFees)) state.universityFees = [];
+      if (!state.fxCadInr || isNaN(state.fxCadInr)) state.fxCadInr = 67.30;
       if (!state.completedReminders || typeof state.completedReminders !== 'object') state.completedReminders = {};
     }
   } catch (e) { console.warn('Load failed', e); }
@@ -1606,6 +1620,7 @@ function deleteDisbursement(idx) {
 
 function renderUniversityFees() {
   const list = document.getElementById('univ-list');
+  const fx = state.fxCadInr || 0;
   let totalINR = 0, totalCAD = 0;
   state.universityFees.forEach(d => {
     if ((d.currency || 'INR') === 'CAD') totalCAD += (d.amount || 0);
@@ -1619,20 +1634,29 @@ function renderUniversityFees() {
     sorted.forEach((d) => {
       const realIdx = state.universityFees.indexOf(d);
       const cur = d.currency || 'INR';
+      const conv = cur === 'CAD' ? ' <span class="small-text">≈ ' + fmtINR((d.amount || 0) * fx) + '</span>' : '';
       html += '<div class="list-item">';
       html += '<div><strong>' + fmtMonth(d.date) + '</strong> <span class="small-text">' + cur + '</span></div>';
-      html += '<div class="gap-row"><span class="amount">' + fmtFee(d.amount, cur) + '</span><button class="icon" onclick="deleteUniversityFee(' + realIdx + ')">×</button></div>';
+      html += '<div class="gap-row"><span class="amount">' + fmtFee(d.amount, cur) + conv + '</span><button class="icon" onclick="deleteUniversityFee(' + realIdx + ')">×</button></div>';
       html += '</div>';
     });
     list.innerHTML = html;
   }
   const t = document.getElementById('univ-total');
   if (t) {
+    const cadInInr = totalCAD * fx;
     let h = '';
     h += '<div class="list-item" style="border-top: 2px solid var(--rule);"><div><strong>Total (₹ INR)</strong></div><div class="amount"><strong>' + fmtINR(totalINR) + '</strong></div></div>';
-    h += '<div class="list-item"><div><strong>Total (C$ CAD)</strong></div><div class="amount"><strong>' + fmtCAD(totalCAD) + '</strong></div></div>';
+    h += '<div class="list-item"><div><strong>Total (C$ CAD)</strong></div><div class="amount"><strong>' + fmtCAD(totalCAD) + '</strong> <span class="small-text">≈ ' + fmtINR(cadInInr) + '</span></div></div>';
+    h += '<div class="list-item" style="border-top: 2px solid var(--ink);"><div><strong>Grand Total (₹ INR incl. CAD)</strong><div class="small-text">at 1 C$ = ₹' + fx + '</div></div><div class="amount"><strong>' + fmtINR(totalINR + cadInInr) + '</strong></div></div>';
     t.innerHTML = h;
   }
+}
+
+function saveFx() {
+  state.fxCadInr = parseFloat(document.getElementById('univ-fx').value) || 0;
+  save();
+  renderUniversityFees();
 }
 
 function addUniversityFee() {
@@ -1718,6 +1742,7 @@ function populateForm() {
   document.getElementById('bi-gst').value = state.bankInsurance.gst;
   document.getElementById('bi-other').value = state.bankInsurance.other;
   document.getElementById('bi-notes').value = state.bankInsurance.notes || '';
+  document.getElementById('univ-fx').value = state.fxCadInr;
   renderBankInsurance();
 
   // Default payment date to today
