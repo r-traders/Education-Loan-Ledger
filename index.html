@@ -417,6 +417,7 @@
     <button class="tab" onclick="switchTab(this, 'tab-investments')">Investment Tracker</button>
     <button class="tab" onclick="switchTab(this, 'tab-projection')">Projection</button>
     <button class="tab" onclick="switchTab(this, 'tab-scenarios')">Scenarios</button>
+    <button class="tab" onclick="switchTab(this, 'tab-bank')">Bank &amp; Insurance</button>
   </div>
 
   <!-- TAB: SETUP -->
@@ -738,6 +739,45 @@
     </section>
   </div>
 
+  <!-- TAB: BANK & INSURANCE -->
+  <div class="tab-content" id="tab-bank">
+    <section>
+      <h2>Bank &amp; Insurance <span class="num">§ VIII</span></h2>
+      <div class="card">
+        <div class="info-box">
+          <strong>One-time charges.</strong> Enter the bank and insurance fees charged at sanction / disbursement. These are recorded here for your reference and do not change the loan-balance calculations.
+        </div>
+        <div class="row-3">
+          <div>
+            <label>Processing Fee (₹)</label>
+            <input type="number" id="bi-processing" value="0" />
+          </div>
+          <div>
+            <label>Insurance / Credit Life Premium (₹)</label>
+            <input type="number" id="bi-insurance" value="0" />
+          </div>
+          <div>
+            <label>GST on Charges (₹)</label>
+            <input type="number" id="bi-gst" value="0" />
+          </div>
+        </div>
+        <div class="row-3">
+          <div>
+            <label>Other Bank Charges (₹)</label>
+            <input type="number" id="bi-other" value="0" />
+          </div>
+          <div>
+            <label>Notes (optional)</label>
+            <input type="text" id="bi-notes" placeholder="e.g. insurance premium financed into the loan" />
+          </div>
+          <div></div>
+        </div>
+        <div class="info-box" id="bi-total" style="font-weight:600;"></div>
+        <button onclick="saveBankInsurance()">Save</button>
+      </div>
+    </section>
+  </div>
+
   <div class="ornament">·  ·  ·</div>
 
   <footer>
@@ -776,6 +816,13 @@ let state = {
     ltSip: 3500,
     ltReturn: 14,
   },
+  bankInsurance: {
+    processing: 0,
+    insurance: 0,
+    gst: 0,
+    other: 0,
+    notes: '',
+  },
   customReminders: [],
   completedReminders: {},  // {reminderId: true}
 };
@@ -790,7 +837,7 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const loaded = JSON.parse(raw);
-      state = { ...state, ...loaded, setup: { ...state.setup, ...loaded.setup }, investments: { ...state.investments, ...(loaded.investments || {}) } };
+      state = { ...state, ...loaded, setup: { ...state.setup, ...loaded.setup }, investments: { ...state.investments, ...(loaded.investments || {}) }, bankInsurance: { ...state.bankInsurance, ...(loaded.bankInsurance || {}) } };
       if (!Array.isArray(state.customReminders)) state.customReminders = [];
       if (!state.completedReminders || typeof state.completedReminders !== 'object') state.completedReminders = {};
     }
@@ -1533,8 +1580,32 @@ function populateForm() {
   document.getElementById('lt-sip').value = state.investments.ltSip;
   document.getElementById('lt-return').value = state.investments.ltReturn;
 
+  document.getElementById('bi-processing').value = state.bankInsurance.processing;
+  document.getElementById('bi-insurance').value = state.bankInsurance.insurance;
+  document.getElementById('bi-gst').value = state.bankInsurance.gst;
+  document.getElementById('bi-other').value = state.bankInsurance.other;
+  document.getElementById('bi-notes').value = state.bankInsurance.notes || '';
+  renderBankInsurance();
+
   // Default payment date to today
   document.getElementById('pay-date').value = new Date().toISOString().substring(0, 10);
+}
+
+function saveBankInsurance() {
+  state.bankInsurance.processing = parseFloat(document.getElementById('bi-processing').value) || 0;
+  state.bankInsurance.insurance = parseFloat(document.getElementById('bi-insurance').value) || 0;
+  state.bankInsurance.gst = parseFloat(document.getElementById('bi-gst').value) || 0;
+  state.bankInsurance.other = parseFloat(document.getElementById('bi-other').value) || 0;
+  state.bankInsurance.notes = document.getElementById('bi-notes').value || '';
+  save();
+  renderBankInsurance();
+}
+
+function renderBankInsurance() {
+  const b = state.bankInsurance;
+  const total = (b.processing || 0) + (b.insurance || 0) + (b.gst || 0) + (b.other || 0);
+  const el = document.getElementById('bi-total');
+  if (el) el.textContent = 'Total one-time charges: ₹' + total.toLocaleString('en-IN');
 }
 
 // =================================================================
