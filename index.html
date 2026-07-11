@@ -350,7 +350,17 @@
   .mini-table td { padding: 4px 6px; vertical-align: middle; }
   .mini-table td:first-child { font-weight: 500; white-space: nowrap; color: var(--ink-soft); }
   .mini-table input { width: 100%; }
-  .cell-input { width: 100%; min-width: 90px; }
+  .cell-input {
+    width: 100px;
+    max-width: 100px;
+    padding: 5px 7px;
+    font-size: 12px;
+    text-align: right;
+  }
+  input[type="number"], input[type="text"], input[type="date"], input[type="month"], select {
+    max-width: 300px;
+  }
+  .cell-input[type="number"] { max-width: 100px; }
 
   /* Footer */
   footer {
@@ -889,6 +899,7 @@
               <th class="mono">Entry (C$)</th>
               <th class="mono">Running Total (C$)</th>
               <th class="mono">Balance in Month (C$)</th>
+              <th class="mono">Used (C$)</th>
               <th class="mono">Balance (₹)</th>
             </tr>
           </thead>
@@ -1617,6 +1628,7 @@ function renderGic() {
   let running = g.opening || 0;
   let totalEntries = 0;
   let lastBalance = null;
+  let lastUsed = null;
   let html = '';
 
   for (let t = startIdx; t <= endIdx && t - startIdx < 120; t++) {
@@ -1630,12 +1642,15 @@ function renderGic() {
     if (r.balance !== null) lastBalance = r.balance;
 
     const shownBal = (r.balance !== null) ? r.balance : running;
+    const used = (r.balance !== null) ? (running - r.balance) : null;
+    if (used !== null) lastUsed = used;
 
     html += '<tr>';
     html += '<td>' + fmtMonth(key) + '</td>';
     html += '<td><input type="number" class="cell-input" value="' + (r.entry || '') + '" placeholder="0" onchange="updateGic(\'' + key + '\', \'entry\', this.value)" /></td>';
     html += '<td class="mono">' + fmtCAD(running) + '</td>';
     html += '<td><input type="number" class="cell-input" value="' + (r.balance !== null ? r.balance : '') + '" placeholder="' + Math.round(running) + '" onchange="updateGic(\'' + key + '\', \'balance\', this.value)" /></td>';
+    html += '<td class="mono">' + (used !== null ? fmtCAD(used) : '—') + '</td>';
     html += '<td class="mono">' + fmtINR(shownBal * rate) + '</td>';
     html += '</tr>';
   }
@@ -1651,7 +1666,7 @@ function renderGic() {
     sh += '<div class="stat-block"><div class="label">Running Total</div><div class="value currency">' + fmtCAD(running) + '</div><div class="sub">' + fmtINR(running * rate) + '</div></div>';
     sh += '<div class="stat-block accent"><div class="label">Overall Balance</div><div class="value currency">' + fmtCAD(overall) + '</div><div class="sub">' + fmtINR(overall * rate) + '</div></div>';
     sh += '</div>';
-    sh += '<div class="small-text" style="margin-top: 8px;">Overall Balance uses the latest month where you entered a balance; otherwise it falls back to the running total.</div>';
+    sh += '<div class="small-text" style="margin-top: 8px;">Used to date: <strong>' + (lastUsed !== null ? fmtCAD(lastUsed) + ' (' + fmtINR(lastUsed * rate) + ')' : '—') + '</strong>. Overall Balance uses the latest month where you entered a balance; otherwise it falls back to the running total.</div>';
     sum.innerHTML = sh;
   }
 }
