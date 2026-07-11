@@ -650,8 +650,8 @@
           <div class="divider"></div>
           <div class="row">
             <div>
-              <label>Lumpsum Month</label>
-              <input type="month" id="adhoc-lump-date" />
+              <label>Lumpsum Date</label>
+              <input type="date" id="adhoc-lump-date" />
             </div>
             <div>
               <label>Lumpsum Amount (₹)</label>
@@ -692,8 +692,8 @@
           <div class="divider"></div>
           <div class="row">
             <div>
-              <label>Lumpsum Month</label>
-              <input type="month" id="lt-lump-date" />
+              <label>Lumpsum Date</label>
+              <input type="date" id="lt-lump-date" />
             </div>
             <div>
               <label>Lumpsum Amount (₹)</label>
@@ -960,6 +960,11 @@ function fmtMonth(yyyymm) {
   const [y, m] = yyyymm.split('-').map(Number);
   return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1] + ' ' + y;
 }
+function fmtDate(iso) {
+  const parts = String(iso).split('-').map(Number);
+  if (parts.length < 3 || isNaN(parts[2])) return fmtMonth(iso);
+  return parts[2] + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parts[1]-1] + ' ' + parts[0];
+}
 
 function monthsBetween(from, to) {
   const [y1, m1] = from.split('-').map(Number);
@@ -1223,7 +1228,7 @@ function renderLumpsumList(listId, arr, delFn) {
   sorted.forEach(d => {
     const idx = arr.indexOf(d);
     total += d.amount || 0;
-    html += '<div class="list-item"><div><strong>' + fmtMonth(d.date) + '</strong></div><div class="gap-row"><span class="amount">' + fmtINR(d.amount) + '</span><button class="icon" onclick="' + delFn + '(' + idx + ')">×</button></div></div>';
+    html += '<div class="list-item"><div><strong>' + fmtDate(d.date) + '</strong></div><div class="gap-row"><span class="amount">' + fmtINR(d.amount) + '</span><button class="icon" onclick="' + delFn + '(' + idx + ')">×</button></div></div>';
   });
   html += '<div class="list-item" style="border-top: 2px solid var(--rule);"><div><strong>Total lumpsum</strong></div><div class="amount"><strong>' + fmtINR(total) + '</strong></div></div>';
   el.innerHTML = html;
