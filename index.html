@@ -349,6 +349,7 @@
   .mini-table td { padding: 4px 6px; vertical-align: middle; }
   .mini-table td:first-child { font-weight: 500; white-space: nowrap; color: var(--ink-soft); }
   .mini-table input { width: 100%; }
+  .cell-input { width: 100%; min-width: 90px; }
 
   /* Footer */
   footer {
@@ -425,6 +426,7 @@
     <button class="tab" onclick="switchTab(this, 'tab-scenarios')">Scenarios</button>
     <button class="tab" onclick="switchTab(this, 'tab-bank')">Bank &amp; Insurance</button>
     <button class="tab" onclick="switchTab(this, 'tab-univ')">University Fees</button>
+    <button class="tab" onclick="switchTab(this, 'tab-expenses')">Monthly Expenses</button>
   </div>
 
   <!-- TAB: SETUP -->
@@ -792,6 +794,50 @@
     </section>
   </div>
 
+  <!-- TAB: MONTHLY EXPENSES -->
+  <div class="tab-content" id="tab-expenses">
+    <section>
+      <h2>Monthly Expenses <span class="num">§ X</span></h2>
+      <div class="info-box">
+        <strong>Living costs.</strong> Accommodation, meals and miscellaneous per month in C$, from the start month to course completion. Converted to ₹ at the standard rate below.
+      </div>
+      <div class="card">
+        <div class="row-3">
+          <div>
+            <label>Start Month</label>
+            <input type="month" id="exp-start" value="2025-01" onchange="saveExpenseSettings()" />
+          </div>
+          <div>
+            <label>Course Completion</label>
+            <input type="month" id="exp-end" value="2026-12" onchange="saveExpenseSettings()" />
+          </div>
+          <div>
+            <label>Conversion Rate (1 C$ = ₹)</label>
+            <input type="number" id="exp-rate" value="66" step="0.01" onchange="saveExpenseSettings()" />
+          </div>
+        </div>
+      </div>
+
+      <h3>Month by Month</h3>
+      <div class="table-scroll">
+        <table id="expenses-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th class="mono">Accommodation (C$)</th>
+              <th class="mono">Meals (C$)</th>
+              <th class="mono">Miscellaneous (C$)</th>
+              <th class="mono">Total (C$)</th>
+              <th class="mono">Total (₹)</th>
+            </tr>
+          </thead>
+          <tbody id="expenses-tbody"></tbody>
+          <tfoot id="expenses-tfoot"></tfoot>
+        </table>
+      </div>
+    </section>
+  </div>
+
   <div class="ornament">·  ·  ·</div>
 
   <footer>
@@ -845,6 +891,12 @@ let state = {
   },
   universityFees: [],
   fxCadInr: 67.30,
+  expenses: {
+    start: '2025-01',
+    courseEnd: '2026-12',
+    rate: 66,
+    rows: {},
+  },
   customReminders: [],
   completedReminders: {},  // {reminderId: true}
 };
@@ -859,7 +911,8 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const loaded = JSON.parse(raw);
-      state = { ...state, ...loaded, setup: { ...state.setup, ...loaded.setup }, investments: { ...state.investments, ...(loaded.investments || {}) }, bankInsurance: { ...state.bankInsurance, ...(loaded.bankInsurance || {}) } };
+      state = { ...state, ...loaded, setup: { ...state.setup, ...loaded.setup }, investments: { ...state.investments, ...(loaded.investments || {}) }, bankInsurance: { ...state.bankInsurance, ...(loaded.bankInsurance || {}) }, expenses: { ...state.expenses, ...(loaded.expenses || {}) } };
+      if (!state.expenses.rows || typeof state.expenses.rows !== 'object') state.expenses.rows = {};
       if (!Array.isArray(state.customReminders)) state.customReminders = [];
       if (!Array.isArray(state.universityFees)) state.universityFees = [];
       if (!state.fxCadInr || isNaN(state.fxCadInr)) state.fxCadInr = 67.30;
@@ -1385,6 +1438,60 @@ function renderScenarios() {
   document.getElementById('scenarios-tbody').innerHTML = html;
 }
 
+function saveExpenseSettings() {
+  state.expenses.start = document.getElementById('exp-start').value || '2025-01';
+  state.expenses.courseEnd = document.getElementById('exp-end').value || '2026-12';
+  state.expenses.rate = parseFloat(document.getElementById('exp-rate').value) || 66;
+  save(); renderExpenses();
+}
+
+function updateExpense(month, field, value) {
+  if (!state.expenses.rows[month]) state.expenses.rows[month] = { acc: 0, meal: 0, misc: 0 };
+  state.expenses.rows[month][field] = parseFloat(value) || 0;
+  save(); renderExpenses();
+}
+
+function renderExpenses() {
+  const tbody = document.getElementById('expenses-tbody');
+  const tfoot = document.getElementById('expenses-tfoot');
+  if (!tbody || !tfoot) return;
+  const e = state.expenses;
+  const rate = e.rate || 66;
+  const [sy, sm] = (e.start || '2025-01').split('-').map(Number);
+  const [ey, em] = (e.courseEnd || '2026-12').split('-').map(Number);
+  const startIdx = sy * 12 + sm - 1;
+  const endIdx = ey * 12 + em - 1;
+
+  let html = '', tAcc = 0, tMeal = 0, tMisc = 0;
+  for (let t = startIdx; t <= endIdx && t - startIdx < 120; t++) {
+    const yr = Math.floor(t / 12);
+    const mo = (t % 12) + 1;
+    const key = yr + '-' + String(mo).padStart(2, '0');
+    const r = e.rows[key] || { acc: 0, meal: 0, misc: 0 };
+    const rowTotal = (r.acc || 0) + (r.meal || 0) + (r.misc || 0);
+    tAcc += (r.acc || 0); tMeal += (r.meal || 0); tMisc += (r.misc || 0);
+    html += '<tr>';
+    html += '<td>' + fmtMonth(key) + '</td>';
+    html += '<td><input type="number" class="cell-input" value="' + (r.acc || '') + '" placeholder="0" onchange="updateExpense(\'' + key + '\', \'acc\', this.value)" /></td>';
+    html += '<td><input type="number" class="cell-input" value="' + (r.meal || '') + '" placeholder="0" onchange="updateExpense(\'' + key + '\', \'meal\', this.value)" /></td>';
+    html += '<td><input type="number" class="cell-input" value="' + (r.misc || '') + '" placeholder="0" onchange="updateExpense(\'' + key + '\', \'misc\', this.value)" /></td>';
+    html += '<td class="mono">' + fmtCAD(rowTotal) + '</td>';
+    html += '<td class="mono">' + fmtINR(rowTotal * rate) + '</td>';
+    html += '</tr>';
+  }
+  tbody.innerHTML = html;
+
+  const grand = tAcc + tMeal + tMisc;
+  tfoot.innerHTML = '<tr style="border-top: 2px solid var(--rule); font-weight: 600;">' +
+    '<td>Total</td>' +
+    '<td class="mono">' + fmtCAD(tAcc) + '</td>' +
+    '<td class="mono">' + fmtCAD(tMeal) + '</td>' +
+    '<td class="mono">' + fmtCAD(tMisc) + '</td>' +
+    '<td class="mono">' + fmtCAD(grand) + '</td>' +
+    '<td class="mono">' + fmtINR(grand * rate) + '</td>' +
+    '</tr>';
+}
+
 function renderAll() {
   renderHero();
   renderReminders();
@@ -1394,6 +1501,7 @@ function renderAll() {
   renderInvestments();
   renderProjection();
   renderScenarios();
+  renderExpenses();
 }
 
 // =================================================================
@@ -1752,6 +1860,9 @@ function populateForm() {
   document.getElementById('bi-other').value = state.bankInsurance.other;
   document.getElementById('bi-notes').value = state.bankInsurance.notes || '';
   document.getElementById('univ-rate').value = state.fxCadInr;
+  document.getElementById('exp-start').value = state.expenses.start;
+  document.getElementById('exp-end').value = state.expenses.courseEnd;
+  document.getElementById('exp-rate').value = state.expenses.rate;
   renderBankInsurance();
 
   // Default payment date to today
