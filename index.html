@@ -343,6 +343,7 @@
   .mb-0 { margin-bottom: 0; }
   .gap-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .divider { height: 1px; background: var(--rule); margin: 18px 0; }
+  .sub-head { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 600; color: var(--ink); margin: 0 0 12px; }
 
   /* Footer */
   footer {
@@ -627,6 +628,7 @@
           <div class="info-box" style="margin-top: 0; margin-bottom: 12px; padding: 8px 10px; font-size: 12px;">
             Suggested fund: <strong>HDFC Liquid Fund — Direct — Growth</strong>. Fund March adhoc payments year on year.
           </div>
+          <div class="sub-head">Fund settings</div>
           <div class="row">
             <div>
               <label>Current Corpus (₹)</label>
@@ -639,13 +641,6 @@
           </div>
           <div class="row">
             <div>
-              <label>SIP Start Date</label>
-              <input type="date" id="adhoc-sip-date" />
-            </div>
-            <div></div>
-          </div>
-          <div class="row">
-            <div>
               <label>Expected Annual Return (%)</label>
               <input type="number" id="adhoc-return" value="6.5" step="0.1" />
             </div>
@@ -654,7 +649,9 @@
               <button onclick="saveInvestments()">Save</button>
             </div>
           </div>
+
           <div class="divider"></div>
+          <div class="sub-head">Lumpsum contributions</div>
           <div class="row">
             <div>
               <label>Lumpsum Date</label>
@@ -667,8 +664,9 @@
           </div>
           <button onclick="addAdhocLumpsum()">Add Lumpsum</button>
           <div id="adhoc-lump-list" style="margin-top: 8px;"></div>
+
           <div class="divider"></div>
-          <label>SIP Log</label>
+          <div class="sub-head">SIP log</div>
           <div class="row">
             <div>
               <label>SIP Date</label>
@@ -681,6 +679,7 @@
           </div>
           <button onclick="addAdhocSip()">Add SIP</button>
           <div id="adhoc-sip-list" style="margin-top: 8px;"></div>
+
           <div class="divider"></div>
           <div id="adhoc-projection"></div>
         </div>
@@ -690,6 +689,7 @@
           <div class="info-box" style="margin-top: 0; margin-bottom: 12px; padding: 8px 10px; font-size: 12px;">
             Suggested fund: <strong>ICICI Prudential Dividend Yield Equity Fund — Direct — Growth</strong>. Defensive equity, lower volatility than Nifty.
           </div>
+          <div class="sub-head">Fund settings</div>
           <div class="row">
             <div>
               <label>Current Corpus (₹)</label>
@@ -702,13 +702,6 @@
           </div>
           <div class="row">
             <div>
-              <label>SIP Start Date</label>
-              <input type="date" id="lt-sip-date" />
-            </div>
-            <div></div>
-          </div>
-          <div class="row">
-            <div>
               <label>Expected Annual Return (%)</label>
               <input type="number" id="lt-return" value="14" step="0.1" />
             </div>
@@ -717,7 +710,9 @@
               <button onclick="saveInvestments()">Save</button>
             </div>
           </div>
+
           <div class="divider"></div>
+          <div class="sub-head">Lumpsum contributions</div>
           <div class="row">
             <div>
               <label>Lumpsum Date</label>
@@ -730,8 +725,9 @@
           </div>
           <button onclick="addLtLumpsum()">Add Lumpsum</button>
           <div id="lt-lump-list" style="margin-top: 8px;"></div>
+
           <div class="divider"></div>
-          <label>SIP Log</label>
+          <div class="sub-head">SIP log</div>
           <div class="row">
             <div>
               <label>SIP Date</label>
@@ -744,6 +740,7 @@
           </div>
           <button onclick="addLtSip()">Add SIP</button>
           <div id="lt-sip-list" style="margin-top: 8px;"></div>
+
           <div class="divider"></div>
           <div id="lt-projection"></div>
         </div>
@@ -1758,8 +1755,6 @@ function saveInvestments() {
   state.investments.ltCorpus = parseFloat(document.getElementById('lt-corpus').value) || 0;
   state.investments.ltSip = parseFloat(document.getElementById('lt-sip').value) || 0;
   state.investments.ltReturn = parseFloat(document.getElementById('lt-return').value) || 0;
-  state.investments.adhocSipDate = document.getElementById('adhoc-sip-date').value;
-  state.investments.ltSipDate = document.getElementById('lt-sip-date').value;
   save(); renderInvestments();
 }
 
@@ -1911,8 +1906,6 @@ function populateForm() {
   document.getElementById('lt-corpus').value = state.investments.ltCorpus;
   document.getElementById('lt-sip').value = state.investments.ltSip;
   document.getElementById('lt-return').value = state.investments.ltReturn;
-  document.getElementById('adhoc-sip-date').value = state.investments.adhocSipDate || '';
-  document.getElementById('lt-sip-date').value = state.investments.ltSipDate || '';
 
   document.getElementById('bi-processing').value = state.bankInsurance.processing;
   document.getElementById('bi-insurance').value = state.bankInsurance.insurance;
