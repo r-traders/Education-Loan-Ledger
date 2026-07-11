@@ -893,7 +893,7 @@
               <th class="mono">Entry (C$)</th>
               <th class="mono">Running Total (C$)</th>
               <th class="mono">Balance in Month (C$)</th>
-              <th class="mono">Used (C$)</th>
+              <th class="mono">Used in Month (C$)</th>
               <th class="mono">Balance (₹)</th>
             </tr>
           </thead>
@@ -1622,9 +1622,11 @@ function renderGic() {
   let running = 0;
   let totalEntries = 0;
   let lastBalance = null;
-  let lastUsed = null;
   let firstEntry = 0;
   let isFirst = true;
+  let prevBalance = 0;
+  let entriesSinceBalance = 0;
+  let totalUsed = 0;
   let html = '';
 
   for (let t = startIdx; t <= endIdx && t - startIdx < 120; t++) {
@@ -1639,8 +1641,15 @@ function renderGic() {
     if (r.balance !== null) lastBalance = r.balance;
 
     const shownBal = (r.balance !== null) ? r.balance : running;
-    const used = (r.balance !== null) ? (running - r.balance) : null;
-    if (used !== null) lastUsed = used;
+
+    entriesSinceBalance += r.entry;
+    let used = null;
+    if (r.balance !== null) {
+      used = prevBalance + entriesSinceBalance - r.balance;
+      totalUsed += used;
+      prevBalance = r.balance;
+      entriesSinceBalance = 0;
+    }
 
     html += '<tr>';
     html += '<td>' + fmtMonth(key) + '</td>';
@@ -1663,7 +1672,7 @@ function renderGic() {
     sh += '<div class="stat-block"><div class="label">Running Total</div><div class="value currency">' + fmtCAD(running) + '</div><div class="sub">' + fmtINR2(running * rate) + '</div></div>';
     sh += '<div class="stat-block accent"><div class="label">Overall Balance</div><div class="value currency">' + fmtCAD(overall) + '</div><div class="sub">' + fmtINR2(overall * rate) + '</div></div>';
     sh += '</div>';
-    sh += '<div class="small-text" style="margin-top: 8px;">Used to date: <strong>' + (lastUsed !== null ? fmtCAD(lastUsed) + ' (' + fmtINR2(lastUsed * rate) + ')' : '—') + '</strong>. Overall Balance uses the latest month where you entered a balance; otherwise it falls back to the running total.</div>';
+    sh += '<div class="small-text" style="margin-top: 8px;">Total used to date: <strong>' + fmtCAD(totalUsed) + ' (' + fmtINR2(totalUsed * rate) + ')</strong>. The Used in Month column is that month only: previous balance + entry − balance. Overall Balance uses the latest month where you entered a balance.</div>';
     sum.innerHTML = sh;
   }
 }
