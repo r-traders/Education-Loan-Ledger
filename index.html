@@ -344,6 +344,11 @@
   .gap-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .divider { height: 1px; background: var(--rule); margin: 18px 0; }
   .sub-head { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 600; color: var(--ink); margin: 0 0 12px; }
+  .mini-table { width: 100%; border-collapse: collapse; }
+  .mini-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-faint); font-weight: 500; padding: 4px 6px; }
+  .mini-table td { padding: 4px 6px; vertical-align: middle; }
+  .mini-table td:first-child { font-weight: 500; white-space: nowrap; color: var(--ink-soft); }
+  .mini-table input { width: 100%; }
 
   /* Footer */
   footer {
@@ -632,53 +637,39 @@
           <div class="row">
             <div>
               <label>Current Corpus (₹)</label>
-              <input type="number" id="adhoc-corpus" value="50000" />
+              <input type="number" id="adhoc-corpus" value="50000" onchange="saveInvestments()" />
             </div>
             <div>
               <label>Monthly SIP (₹)</label>
-              <input type="number" id="adhoc-sip" value="5000" />
+              <input type="number" id="adhoc-sip" value="5000" onchange="saveInvestments()" />
             </div>
           </div>
           <div class="row">
             <div>
               <label>Expected Annual Return (%)</label>
-              <input type="number" id="adhoc-return" value="6.5" step="0.1" />
+              <input type="number" id="adhoc-return" value="6.5" step="0.1" onchange="saveInvestments()" />
             </div>
-            <div>
-              <label>&nbsp;</label>
-              <button onclick="saveInvestments()">Save</button>
-            </div>
+            <div></div>
           </div>
 
           <div class="divider"></div>
-          <div class="sub-head">Lumpsum contributions</div>
-          <div class="row">
-            <div>
-              <label>Lumpsum Date</label>
-              <input type="date" id="adhoc-lump-date" />
-            </div>
+          <div class="sub-head">SIP contributions</div>
+          <table class="mini-table">
+            <thead><tr><th>SIP</th><th>Date</th><th>Amount (₹)</th></tr></thead>
+            <tbody>
+              <tr><td>SIP 1</td><td><input type="date" id="adhoc-sip1-date" onchange="saveInvestments()" /></td><td><input type="number" id="adhoc-sip1-amt" placeholder="5000" onchange="saveInvestments()" /></td></tr>
+              <tr><td>SIP 2</td><td><input type="date" id="adhoc-sip2-date" onchange="saveInvestments()" /></td><td><input type="number" id="adhoc-sip2-amt" placeholder="5000" onchange="saveInvestments()" /></td></tr>
+              <tr><td>SIP 3</td><td><input type="date" id="adhoc-sip3-date" onchange="saveInvestments()" /></td><td><input type="number" id="adhoc-sip3-amt" placeholder="5000" onchange="saveInvestments()" /></td></tr>
+            </tbody>
+          </table>
+          <div class="row" style="margin-top: 12px;">
             <div>
               <label>Lumpsum Amount (₹)</label>
-              <input type="number" id="adhoc-lump-amount" placeholder="25000" />
+              <input type="number" id="adhoc-lump-amt" placeholder="25000" onchange="saveInvestments()" />
             </div>
+            <div></div>
           </div>
-          <button onclick="addAdhocLumpsum()">Add Lumpsum</button>
-          <div id="adhoc-lump-list" style="margin-top: 8px;"></div>
-
-          <div class="divider"></div>
-          <div class="sub-head">SIP log</div>
-          <div class="row">
-            <div>
-              <label>SIP Date</label>
-              <input type="date" id="adhoc-sipadd-date" />
-            </div>
-            <div>
-              <label>SIP Amount (₹)</label>
-              <input type="number" id="adhoc-sipadd-amount" placeholder="5000" />
-            </div>
-          </div>
-          <button onclick="addAdhocSip()">Add SIP</button>
-          <div id="adhoc-sip-list" style="margin-top: 8px;"></div>
+          <div id="adhoc-tbl-total" class="small-text" style="margin-top: 8px;"></div>
 
           <div class="divider"></div>
           <div id="adhoc-projection"></div>
@@ -693,53 +684,39 @@
           <div class="row">
             <div>
               <label>Current Corpus (₹)</label>
-              <input type="number" id="lt-corpus" value="0" />
+              <input type="number" id="lt-corpus" value="0" onchange="saveInvestments()" />
             </div>
             <div>
               <label>Monthly SIP (₹)</label>
-              <input type="number" id="lt-sip" value="3500" />
+              <input type="number" id="lt-sip" value="3500" onchange="saveInvestments()" />
             </div>
           </div>
           <div class="row">
             <div>
               <label>Expected Annual Return (%)</label>
-              <input type="number" id="lt-return" value="14" step="0.1" />
+              <input type="number" id="lt-return" value="14" step="0.1" onchange="saveInvestments()" />
             </div>
-            <div>
-              <label>&nbsp;</label>
-              <button onclick="saveInvestments()">Save</button>
-            </div>
+            <div></div>
           </div>
 
           <div class="divider"></div>
-          <div class="sub-head">Lumpsum contributions</div>
-          <div class="row">
-            <div>
-              <label>Lumpsum Date</label>
-              <input type="date" id="lt-lump-date" />
-            </div>
+          <div class="sub-head">SIP contributions</div>
+          <table class="mini-table">
+            <thead><tr><th>SIP</th><th>Date</th><th>Amount (₹)</th></tr></thead>
+            <tbody>
+              <tr><td>SIP 1</td><td><input type="date" id="lt-sip1-date" onchange="saveInvestments()" /></td><td><input type="number" id="lt-sip1-amt" placeholder="3500" onchange="saveInvestments()" /></td></tr>
+              <tr><td>SIP 2</td><td><input type="date" id="lt-sip2-date" onchange="saveInvestments()" /></td><td><input type="number" id="lt-sip2-amt" placeholder="3500" onchange="saveInvestments()" /></td></tr>
+              <tr><td>SIP 3</td><td><input type="date" id="lt-sip3-date" onchange="saveInvestments()" /></td><td><input type="number" id="lt-sip3-amt" placeholder="3500" onchange="saveInvestments()" /></td></tr>
+            </tbody>
+          </table>
+          <div class="row" style="margin-top: 12px;">
             <div>
               <label>Lumpsum Amount (₹)</label>
-              <input type="number" id="lt-lump-amount" placeholder="100000" />
+              <input type="number" id="lt-lump-amt" placeholder="100000" onchange="saveInvestments()" />
             </div>
+            <div></div>
           </div>
-          <button onclick="addLtLumpsum()">Add Lumpsum</button>
-          <div id="lt-lump-list" style="margin-top: 8px;"></div>
-
-          <div class="divider"></div>
-          <div class="sub-head">SIP log</div>
-          <div class="row">
-            <div>
-              <label>SIP Date</label>
-              <input type="date" id="lt-sipadd-date" />
-            </div>
-            <div>
-              <label>SIP Amount (₹)</label>
-              <input type="number" id="lt-sipadd-amount" placeholder="3500" />
-            </div>
-          </div>
-          <button onclick="addLtSip()">Add SIP</button>
-          <div id="lt-sip-list" style="margin-top: 8px;"></div>
+          <div id="lt-tbl-total" class="small-text" style="margin-top: 8px;"></div>
 
           <div class="divider"></div>
           <div id="lt-projection"></div>
@@ -935,10 +912,10 @@ let state = {
     ltReturn: 14,
     adhocSipDate: '',
     ltSipDate: '',
-    adhocLumpsums: [],
-    ltLumpsums: [],
-    adhocSips: [],
-    ltSips: [],
+    adhocSipRows: [{date:'',amount:0},{date:'',amount:0},{date:'',amount:0}],
+    ltSipRows: [{date:'',amount:0},{date:'',amount:0},{date:'',amount:0}],
+    adhocLumpAmount: 0,
+    ltLumpAmount: 0,
   },
   bankInsurance: {
     processing: 0,
@@ -967,10 +944,10 @@ function load() {
       if (!Array.isArray(state.customReminders)) state.customReminders = [];
       if (!Array.isArray(state.universityFees)) state.universityFees = [];
       if (!state.fxCadInr || isNaN(state.fxCadInr)) state.fxCadInr = 67.30;
-      if (!Array.isArray(state.investments.adhocLumpsums)) state.investments.adhocLumpsums = [];
-      if (!Array.isArray(state.investments.ltLumpsums)) state.investments.ltLumpsums = [];
-      if (!Array.isArray(state.investments.adhocSips)) state.investments.adhocSips = [];
-      if (!Array.isArray(state.investments.ltSips)) state.investments.ltSips = [];
+      ['adhocSipRows', 'ltSipRows'].forEach(k => {
+        if (!Array.isArray(state.investments[k])) state.investments[k] = [];
+        while (state.investments[k].length < 3) state.investments[k].push({ date: '', amount: 0 });
+      });
       if (!state.completedReminders || typeof state.completedReminders !== 'object') state.completedReminders = {};
     }
   } catch (e) { console.warn('Load failed', e); }
@@ -1264,93 +1241,6 @@ function renderDisbursements() {
   if (t) t.innerHTML = '<div class="list-item" style="border-top: 2px solid var(--rule);"><div><strong>Total</strong></div><div class="amount"><strong>' + fmtINR(total) + '</strong></div></div>';
 }
 
-function renderLumpsumList(listId, arr, delFn, totalLabel, emptyLabel) {
-  const el = document.getElementById(listId);
-  if (!el) return;
-  totalLabel = totalLabel || 'Total lumpsum';
-  emptyLabel = emptyLabel || 'No lumpsums recorded.';
-  if (!arr.length) { el.innerHTML = '<div class="small-text">' + emptyLabel + '</div>'; return; }
-  const sorted = [...arr].sort((a, b) => a.date.localeCompare(b.date));
-  let total = 0, html = '';
-  sorted.forEach(d => {
-    const idx = arr.indexOf(d);
-    total += d.amount || 0;
-    html += '<div class="list-item"><div><strong>' + fmtDate(d.date) + '</strong></div><div class="gap-row"><span class="amount">' + fmtINR(d.amount) + '</span><button class="icon" onclick="' + delFn + '(' + idx + ')">×</button></div></div>';
-  });
-  html += '<div class="list-item" style="border-top: 2px solid var(--rule);"><div><strong>' + totalLabel + '</strong></div><div class="amount"><strong>' + fmtINR(total) + '</strong></div></div>';
-  el.innerHTML = html;
-}
-
-function renderInvestmentLumpsums() {
-  renderLumpsumList('adhoc-lump-list', state.investments.adhocLumpsums || [], 'deleteAdhocLumpsum');
-  renderLumpsumList('lt-lump-list', state.investments.ltLumpsums || [], 'deleteLtLumpsum');
-}
-
-function addAdhocLumpsum() {
-  const date = document.getElementById('adhoc-lump-date').value;
-  const amount = parseFloat(document.getElementById('adhoc-lump-amount').value);
-  if (!date || !amount) { alert('Please enter month and amount'); return; }
-  state.investments.adhocLumpsums.push({ date, amount });
-  document.getElementById('adhoc-lump-date').value = '';
-  document.getElementById('adhoc-lump-amount').value = '';
-  save(); renderInvestmentLumpsums();
-}
-
-function deleteAdhocLumpsum(idx) {
-  state.investments.adhocLumpsums.splice(idx, 1);
-  save(); renderInvestmentLumpsums();
-}
-
-function addLtLumpsum() {
-  const date = document.getElementById('lt-lump-date').value;
-  const amount = parseFloat(document.getElementById('lt-lump-amount').value);
-  if (!date || !amount) { alert('Please enter month and amount'); return; }
-  state.investments.ltLumpsums.push({ date, amount });
-  document.getElementById('lt-lump-date').value = '';
-  document.getElementById('lt-lump-amount').value = '';
-  save(); renderInvestmentLumpsums();
-}
-
-function deleteLtLumpsum(idx) {
-  state.investments.ltLumpsums.splice(idx, 1);
-  save(); renderInvestmentLumpsums();
-}
-
-function renderInvestmentSips() {
-  renderLumpsumList('adhoc-sip-list', state.investments.adhocSips || [], 'deleteAdhocSip', 'Total SIP', 'No SIPs recorded.');
-  renderLumpsumList('lt-sip-list', state.investments.ltSips || [], 'deleteLtSip', 'Total SIP', 'No SIPs recorded.');
-}
-
-function addAdhocSip() {
-  const date = document.getElementById('adhoc-sipadd-date').value;
-  const amount = parseFloat(document.getElementById('adhoc-sipadd-amount').value);
-  if (!date || !amount) { alert('Please enter date and amount'); return; }
-  state.investments.adhocSips.push({ date, amount });
-  document.getElementById('adhoc-sipadd-date').value = '';
-  document.getElementById('adhoc-sipadd-amount').value = '';
-  save(); renderInvestmentSips();
-}
-
-function deleteAdhocSip(idx) {
-  state.investments.adhocSips.splice(idx, 1);
-  save(); renderInvestmentSips();
-}
-
-function addLtSip() {
-  const date = document.getElementById('lt-sipadd-date').value;
-  const amount = parseFloat(document.getElementById('lt-sipadd-amount').value);
-  if (!date || !amount) { alert('Please enter date and amount'); return; }
-  state.investments.ltSips.push({ date, amount });
-  document.getElementById('lt-sipadd-date').value = '';
-  document.getElementById('lt-sipadd-amount').value = '';
-  save(); renderInvestmentSips();
-}
-
-function deleteLtSip(idx) {
-  state.investments.ltSips.splice(idx, 1);
-  save(); renderInvestmentSips();
-}
-
 function renderInvestments() {
   const inv = state.investments;
   // Adhoc fund projection
@@ -1420,8 +1310,10 @@ function renderInvestments() {
   const investTotEl = document.getElementById('invest-total');
   if (investTotEl) investTotEl.innerHTML = '<strong>Totals now:</strong> combined corpus ' + fmtINR(inv.adhocCorpus + inv.ltCorpus) + ' &middot; combined monthly SIP ' + fmtINR(inv.adhocSip + inv.ltSip);
 
-  renderInvestmentLumpsums();
-  renderInvestmentSips();
+  const aSum = (state.investments.adhocSipRows || []).reduce((s, r) => s + (r.amount || 0), 0) + (state.investments.adhocLumpAmount || 0);
+  const lSum = (state.investments.ltSipRows || []).reduce((s, r) => s + (r.amount || 0), 0) + (state.investments.ltLumpAmount || 0);
+  const ae = document.getElementById('adhoc-tbl-total'); if (ae) ae.textContent = 'Recorded: 3 SIPs + lumpsum = ' + fmtINR(aSum);
+  const le = document.getElementById('lt-tbl-total'); if (le) le.textContent = 'Recorded: 3 SIPs + lumpsum = ' + fmtINR(lSum);
 }
 
 function renderProjection() {
@@ -1749,12 +1641,20 @@ function saveSetup() {
 }
 
 function saveInvestments() {
-  state.investments.adhocCorpus = parseFloat(document.getElementById('adhoc-corpus').value) || 0;
-  state.investments.adhocSip = parseFloat(document.getElementById('adhoc-sip').value) || 0;
-  state.investments.adhocReturn = parseFloat(document.getElementById('adhoc-return').value) || 0;
-  state.investments.ltCorpus = parseFloat(document.getElementById('lt-corpus').value) || 0;
-  state.investments.ltSip = parseFloat(document.getElementById('lt-sip').value) || 0;
-  state.investments.ltReturn = parseFloat(document.getElementById('lt-return').value) || 0;
+  const inv = state.investments;
+  const g = id => (document.getElementById(id) ? document.getElementById(id).value : '');
+  inv.adhocCorpus = parseFloat(g('adhoc-corpus')) || 0;
+  inv.adhocSip = parseFloat(g('adhoc-sip')) || 0;
+  inv.adhocReturn = parseFloat(g('adhoc-return')) || 0;
+  inv.ltCorpus = parseFloat(g('lt-corpus')) || 0;
+  inv.ltSip = parseFloat(g('lt-sip')) || 0;
+  inv.ltReturn = parseFloat(g('lt-return')) || 0;
+  for (let i = 1; i <= 3; i++) {
+    inv.adhocSipRows[i - 1] = { date: g('adhoc-sip' + i + '-date'), amount: parseFloat(g('adhoc-sip' + i + '-amt')) || 0 };
+    inv.ltSipRows[i - 1] = { date: g('lt-sip' + i + '-date'), amount: parseFloat(g('lt-sip' + i + '-amt')) || 0 };
+  }
+  inv.adhocLumpAmount = parseFloat(g('adhoc-lump-amt')) || 0;
+  inv.ltLumpAmount = parseFloat(g('lt-lump-amt')) || 0;
   save(); renderInvestments();
 }
 
@@ -1906,6 +1806,16 @@ function populateForm() {
   document.getElementById('lt-corpus').value = state.investments.ltCorpus;
   document.getElementById('lt-sip').value = state.investments.ltSip;
   document.getElementById('lt-return').value = state.investments.ltReturn;
+  for (let i = 1; i <= 3; i++) {
+    const ar = state.investments.adhocSipRows[i - 1] || { date: '', amount: 0 };
+    const lr = state.investments.ltSipRows[i - 1] || { date: '', amount: 0 };
+    document.getElementById('adhoc-sip' + i + '-date').value = ar.date || '';
+    document.getElementById('adhoc-sip' + i + '-amt').value = ar.amount || '';
+    document.getElementById('lt-sip' + i + '-date').value = lr.date || '';
+    document.getElementById('lt-sip' + i + '-amt').value = lr.amount || '';
+  }
+  document.getElementById('adhoc-lump-amt').value = state.investments.adhocLumpAmount || '';
+  document.getElementById('lt-lump-amt').value = state.investments.ltLumpAmount || '';
 
   document.getElementById('bi-processing').value = state.bankInsurance.processing;
   document.getElementById('bi-insurance').value = state.bankInsurance.insurance;
