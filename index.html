@@ -859,7 +859,7 @@
           </div>
           <div>
             <label>End Month</label>
-            <input type="month" id="gic-end" value="2025-12" onchange="saveGicSettings()" />
+            <input type="month" id="gic-end" value="2029-12" onchange="saveGicSettings()" />
           </div>
           <div>
             <label>Opening Deposit (C$)</label>
@@ -959,8 +959,8 @@ let state = {
   },
   gic: {
     start: '2024-12',
-    end: '2025-12',
-    v: 2,
+    end: '2029-12',
+    v: 3,
     opening: 0,
     rate: 66,
     rows: {},
@@ -984,7 +984,7 @@ function load() {
       state.gic = { ...state.gic, ...(loaded.gic || {}) };
       if (!state.expenses.rows || typeof state.expenses.rows !== 'object') state.expenses.rows = {};
       if (!state.gic.rows || typeof state.gic.rows !== 'object') state.gic.rows = {};
-      if (!state.gic.v) { state.gic.end = '2025-12'; state.gic.v = 2; migrated = true; }
+      if (!state.gic.v || state.gic.v < 3) { state.gic.end = '2029-12'; state.gic.v = 3; migrated = true; }
       if (!Array.isArray(state.customReminders)) state.customReminders = [];
       if (!Array.isArray(state.universityFees)) state.universityFees = [];
       if (!state.fxCadInr || isNaN(state.fxCadInr)) state.fxCadInr = 67.30;
@@ -1572,7 +1572,7 @@ function renderExpenses() {
 
 function saveGicSettings() {
   state.gic.start = document.getElementById('gic-start').value || '2024-12';
-  state.gic.end = document.getElementById('gic-end').value || '2026-12';
+  state.gic.end = document.getElementById('gic-end').value || '2029-12';
   state.gic.opening = parseFloat(document.getElementById('gic-opening').value) || 0;
   state.gic.rate = parseFloat(document.getElementById('gic-rate').value) || 66;
   save(); renderGic();
@@ -1599,7 +1599,7 @@ function renderGic() {
   const g = state.gic;
   const rate = g.rate || 66;
   const [sy, sm] = (g.start || '2024-12').split('-').map(Number);
-  const [ey, em] = (g.end || '2025-12').split('-').map(Number);
+  const [ey, em] = (g.end || '2029-12').split('-').map(Number);
   const startIdx = sy * 12 + sm - 1;
   const endIdx = ey * 12 + em - 1;
 
