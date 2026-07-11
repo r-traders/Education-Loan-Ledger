@@ -222,10 +222,11 @@
   /* Tabs */
   .tabs {
     display: flex;
-    gap: 4px;
+    flex-wrap: wrap;
+    gap: 4px 2px;
     border-bottom: 1px solid var(--rule);
     margin-bottom: 18px;
-    overflow-x: auto;
+    overflow-x: visible;
   }
   .tab {
     padding: 10px 18px;
@@ -427,6 +428,7 @@
     <button class="tab" onclick="switchTab(this, 'tab-bank')">Bank &amp; Insurance</button>
     <button class="tab" onclick="switchTab(this, 'tab-univ')">University Fees</button>
     <button class="tab" onclick="switchTab(this, 'tab-expenses')">Monthly Expenses</button>
+    <button class="tab" onclick="switchTab(this, 'tab-gic')">GIC</button>
   </div>
 
   <!-- TAB: SETUP -->
@@ -818,6 +820,10 @@
         </div>
       </div>
 
+      <div class="card">
+        <div id="expenses-summary"></div>
+      </div>
+
       <h3>Month by Month</h3>
       <div class="table-scroll">
         <table id="expenses-table">
@@ -833,6 +839,59 @@
           </thead>
           <tbody id="expenses-tbody"></tbody>
           <tfoot id="expenses-tfoot"></tfoot>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- TAB: GIC -->
+  <div class="tab-content" id="tab-gic">
+    <section>
+      <h2>GIC Account <span class="num">§ XI</span></h2>
+      <div class="info-box">
+        <strong>GIC (Guaranteed Investment Certificate).</strong> Opening deposit plus the monthly entry (payout received is negative, top-up is positive). Balance is carried forward each month.
+      </div>
+      <div class="card">
+        <div class="row-3">
+          <div>
+            <label>Start Month</label>
+            <input type="month" id="gic-start" value="2024-12" onchange="saveGicSettings()" />
+          </div>
+          <div>
+            <label>End Month</label>
+            <input type="month" id="gic-end" value="2026-12" onchange="saveGicSettings()" />
+          </div>
+          <div>
+            <label>Opening Deposit (C$)</label>
+            <input type="number" id="gic-opening" value="0" onchange="saveGicSettings()" />
+          </div>
+        </div>
+        <div class="row-3">
+          <div>
+            <label>Conversion Rate (1 C$ = ₹)</label>
+            <input type="number" id="gic-rate" value="66" step="0.01" onchange="saveGicSettings()" />
+          </div>
+          <div></div>
+          <div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div id="gic-summary"></div>
+      </div>
+
+      <h3>Month by Month</h3>
+      <div class="table-scroll">
+        <table id="gic-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th class="mono">Entry (C$)</th>
+              <th class="mono">Balance (C$)</th>
+              <th class="mono">Balance (₹)</th>
+            </tr>
+          </thead>
+          <tbody id="gic-tbody"></tbody>
         </table>
       </div>
     </section>
@@ -897,6 +956,13 @@ let state = {
     rate: 66,
     rows: {},
   },
+  gic: {
+    start: '2024-12',
+    end: '2026-12',
+    opening: 0,
+    rate: 66,
+    rows: {},
+  },
   customReminders: [],
   completedReminders: {},  // {reminderId: true}
 };
@@ -912,7 +978,9 @@ function load() {
     if (raw) {
       const loaded = JSON.parse(raw);
       state = { ...state, ...loaded, setup: { ...state.setup, ...loaded.setup }, investments: { ...state.investments, ...(loaded.investments || {}) }, bankInsurance: { ...state.bankInsurance, ...(loaded.bankInsurance || {}) }, expenses: { ...state.expenses, ...(loaded.expenses || {}) } };
+      state.gic = { ...state.gic, ...(loaded.gic || {}) };
       if (!state.expenses.rows || typeof state.expenses.rows !== 'object') state.expenses.rows = {};
+      if (!state.gic.rows || typeof state.gic.rows !== 'object') state.gic.rows = {};
       if (!Array.isArray(state.customReminders)) state.customReminders = [];
       if (!Array.isArray(state.universityFees)) state.universityFees = [];
       if (!state.fxCadInr || isNaN(state.fxCadInr)) state.fxCadInr = 67.30;
@@ -1482,14 +1550,74 @@ function renderExpenses() {
   tbody.innerHTML = html;
 
   const grand = tAcc + tMeal + tMisc;
-  tfoot.innerHTML = '<tr style="border-top: 2px solid var(--rule); font-weight: 600;">' +
-    '<td>Total</td>' +
-    '<td class="mono">' + fmtCAD(tAcc) + '</td>' +
-    '<td class="mono">' + fmtCAD(tMeal) + '</td>' +
-    '<td class="mono">' + fmtCAD(tMisc) + '</td>' +
-    '<td class="mono">' + fmtCAD(grand) + '</td>' +
-    '<td class="mono">' + fmtINR(grand * rate) + '</td>' +
-    '</tr>';
+  const months = endIdx - startIdx + 1;
+  tfoot.innerHTML = '';
+
+  const sum = document.getElementById('expenses-summary');
+  if (sum) {
+    let sh = '<div class="row-4">';
+    sh += '<div class="stat-block"><div class="label">Accommodation</div><div class="value currency">' + fmtCAD(tAcc) + '</div><div class="sub">' + fmtINR(tAcc * rate) + '</div></div>';
+    sh += '<div class="stat-block"><div class="label">Meals</div><div class="value currency">' + fmtCAD(tMeal) + '</div><div class="sub">' + fmtINR(tMeal * rate) + '</div></div>';
+    sh += '<div class="stat-block"><div class="label">Miscellaneous</div><div class="value currency">' + fmtCAD(tMisc) + '</div><div class="sub">' + fmtINR(tMisc * rate) + '</div></div>';
+    sh += '<div class="stat-block accent"><div class="label">Grand Total</div><div class="value currency">' + fmtCAD(grand) + '</div><div class="sub">' + fmtINR(grand * rate) + '</div></div>';
+    sh += '</div>';
+    sh += '<div class="small-text" style="margin-top: 8px;">' + months + ' months &middot; average ' + fmtCAD(months ? grand / months : 0) + ' / month (' + fmtINR(months ? (grand * rate) / months : 0) + ')</div>';
+    sum.innerHTML = sh;
+  }
+}
+
+function saveGicSettings() {
+  state.gic.start = document.getElementById('gic-start').value || '2024-12';
+  state.gic.end = document.getElementById('gic-end').value || '2026-12';
+  state.gic.opening = parseFloat(document.getElementById('gic-opening').value) || 0;
+  state.gic.rate = parseFloat(document.getElementById('gic-rate').value) || 66;
+  save(); renderGic();
+}
+
+function updateGic(month, value) {
+  state.gic.rows[month] = parseFloat(value) || 0;
+  save(); renderGic();
+}
+
+function renderGic() {
+  const tbody = document.getElementById('gic-tbody');
+  if (!tbody) return;
+  const g = state.gic;
+  const rate = g.rate || 66;
+  const [sy, sm] = (g.start || '2024-12').split('-').map(Number);
+  const [ey, em] = (g.end || '2026-12').split('-').map(Number);
+  const startIdx = sy * 12 + sm - 1;
+  const endIdx = ey * 12 + em - 1;
+
+  let balance = g.opening || 0;
+  let totalIn = 0, totalOut = 0;
+  let html = '';
+  for (let t = startIdx; t <= endIdx && t - startIdx < 120; t++) {
+    const yr = Math.floor(t / 12);
+    const mo = (t % 12) + 1;
+    const key = yr + '-' + String(mo).padStart(2, '0');
+    const entry = g.rows[key] || 0;
+    balance += entry;
+    if (entry >= 0) totalIn += entry; else totalOut += Math.abs(entry);
+    html += '<tr>';
+    html += '<td>' + fmtMonth(key) + '</td>';
+    html += '<td><input type="number" class="cell-input" value="' + (entry || '') + '" placeholder="0" onchange="updateGic(\'' + key + '\', this.value)" /></td>';
+    html += '<td class="mono">' + fmtCAD(balance) + '</td>';
+    html += '<td class="mono">' + fmtINR(balance * rate) + '</td>';
+    html += '</tr>';
+  }
+  tbody.innerHTML = html;
+
+  const sum = document.getElementById('gic-summary');
+  if (sum) {
+    let sh = '<div class="row-4">';
+    sh += '<div class="stat-block"><div class="label">Opening Deposit</div><div class="value currency">' + fmtCAD(g.opening || 0) + '</div><div class="sub">' + fmtINR((g.opening || 0) * rate) + '</div></div>';
+    sh += '<div class="stat-block"><div class="label">Added</div><div class="value currency">' + fmtCAD(totalIn) + '</div></div>';
+    sh += '<div class="stat-block"><div class="label">Withdrawn</div><div class="value currency">' + fmtCAD(totalOut) + '</div></div>';
+    sh += '<div class="stat-block accent"><div class="label">Closing Balance</div><div class="value currency">' + fmtCAD(balance) + '</div><div class="sub">' + fmtINR(balance * rate) + '</div></div>';
+    sh += '</div>';
+    sum.innerHTML = sh;
+  }
 }
 
 function renderAll() {
@@ -1502,6 +1630,7 @@ function renderAll() {
   renderProjection();
   renderScenarios();
   renderExpenses();
+  renderGic();
 }
 
 // =================================================================
@@ -1863,6 +1992,10 @@ function populateForm() {
   document.getElementById('exp-start').value = state.expenses.start;
   document.getElementById('exp-end').value = state.expenses.courseEnd;
   document.getElementById('exp-rate').value = state.expenses.rate;
+  document.getElementById('gic-start').value = state.gic.start;
+  document.getElementById('gic-end').value = state.gic.end;
+  document.getElementById('gic-opening').value = state.gic.opening;
+  document.getElementById('gic-rate').value = state.gic.rate;
   renderBankInsurance();
 
   // Default payment date to today
