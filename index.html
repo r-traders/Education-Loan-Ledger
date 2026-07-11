@@ -874,17 +874,9 @@
             <input type="month" id="gic-end" value="2029-12" onchange="saveGicSettings()" />
           </div>
           <div>
-            <label>Opening Deposit (C$)</label>
-            <input type="number" id="gic-opening" value="0" onchange="saveGicSettings()" />
-          </div>
-        </div>
-        <div class="row-3">
-          <div>
             <label>Conversion Rate (1 C$ = ₹)</label>
             <input type="number" id="gic-rate" value="66" step="0.01" onchange="saveGicSettings()" />
           </div>
-          <div></div>
-          <div></div>
         </div>
       </div>
 
@@ -1598,7 +1590,6 @@ function renderExpenses() {
 function saveGicSettings() {
   state.gic.start = document.getElementById('gic-start').value || '2025-01';
   state.gic.end = document.getElementById('gic-end').value || '2029-12';
-  state.gic.opening = parseFloat(document.getElementById('gic-opening').value) || 0;
   state.gic.rate = parseFloat(document.getElementById('gic-rate').value) || 66;
   save(); renderGic();
 }
@@ -1628,10 +1619,12 @@ function renderGic() {
   const startIdx = sy * 12 + sm - 1;
   const endIdx = ey * 12 + em - 1;
 
-  let running = g.opening || 0;
+  let running = 0;
   let totalEntries = 0;
   let lastBalance = null;
   let lastUsed = null;
+  let firstEntry = 0;
+  let isFirst = true;
   let html = '';
 
   for (let t = startIdx; t <= endIdx && t - startIdx < 120; t++) {
@@ -1640,6 +1633,7 @@ function renderGic() {
     const key = yr + '-' + String(mo).padStart(2, '0');
     const r = gicRow(key);
 
+    if (isFirst) { firstEntry = r.entry; isFirst = false; }
     running += r.entry;
     totalEntries += r.entry;
     if (r.balance !== null) lastBalance = r.balance;
@@ -1664,7 +1658,7 @@ function renderGic() {
   const sum = document.getElementById('gic-summary');
   if (sum) {
     let sh = '<div class="row-4">';
-    sh += '<div class="stat-block"><div class="label">Opening Deposit</div><div class="value currency">' + fmtCAD(g.opening || 0) + '</div><div class="sub">' + fmtINR2((g.opening || 0) * rate) + '</div></div>';
+    sh += '<div class="stat-block"><div class="label">Opening Deposit</div><div class="value currency">' + fmtCAD(firstEntry) + '</div><div class="sub">' + fmtINR2(firstEntry * rate) + '</div></div>';
     sh += '<div class="stat-block"><div class="label">Total Entries</div><div class="value currency">' + fmtCAD(totalEntries) + '</div><div class="sub">' + fmtINR2(totalEntries * rate) + '</div></div>';
     sh += '<div class="stat-block"><div class="label">Running Total</div><div class="value currency">' + fmtCAD(running) + '</div><div class="sub">' + fmtINR2(running * rate) + '</div></div>';
     sh += '<div class="stat-block accent"><div class="label">Overall Balance</div><div class="value currency">' + fmtCAD(overall) + '</div><div class="sub">' + fmtINR2(overall * rate) + '</div></div>';
@@ -2048,7 +2042,6 @@ function populateForm() {
   document.getElementById('exp-rate').value = state.expenses.rate;
   document.getElementById('gic-start').value = state.gic.start;
   document.getElementById('gic-end').value = state.gic.end;
-  document.getElementById('gic-opening').value = state.gic.opening;
   document.getElementById('gic-rate').value = state.gic.rate;
   renderBankInsurance();
 
