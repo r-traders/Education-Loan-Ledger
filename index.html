@@ -633,7 +633,6 @@
           <div class="info-box" style="margin-top: 0; margin-bottom: 12px; padding: 8px 10px; font-size: 12px;">
             Suggested fund: <strong>HDFC Liquid Fund — Direct — Growth</strong>. Fund March adhoc payments year on year.
           </div>
-          <div class="sub-head">Fund settings</div>
           <div class="row">
             <div>
               <label>Current Corpus (₹)</label>
@@ -653,7 +652,6 @@
           </div>
 
           <div class="divider"></div>
-          <div class="sub-head">SIP contributions</div>
           <table class="mini-table">
             <thead><tr><th>SIP</th><th>Date</th><th>Amount (₹)</th></tr></thead>
             <tbody>
@@ -680,7 +678,6 @@
           <div class="info-box" style="margin-top: 0; margin-bottom: 12px; padding: 8px 10px; font-size: 12px;">
             Suggested fund: <strong>ICICI Prudential Dividend Yield Equity Fund — Direct — Growth</strong>. Defensive equity, lower volatility than Nifty.
           </div>
-          <div class="sub-head">Fund settings</div>
           <div class="row">
             <div>
               <label>Current Corpus (₹)</label>
@@ -700,7 +697,6 @@
           </div>
 
           <div class="divider"></div>
-          <div class="sub-head">SIP contributions</div>
           <table class="mini-table">
             <thead><tr><th>SIP</th><th>Date</th><th>Amount (₹)</th></tr></thead>
             <tbody>
@@ -1269,10 +1265,13 @@ function renderInvestments() {
     const mo = (totalMonths % 12) + 1;
     const monthStr = yr + '-' + pad(mo);
 
-    corpus = corpus * (1 + r1) + inv.adhocSip;
+    corpus = corpus * (1 + r1);
+    if (i === 0 && inv.adhocLumpAmount > 0) {
+      corpus += inv.adhocLumpAmount;
+      log1 += '<tr class="adhoc-row"><td>' + fmtMonth(monthStr) + '</td><td class="mono">' + fmtINR(corpus) + '</td><td>+Lumpsum ' + fmtINR(inv.adhocLumpAmount) + '</td></tr>';
+    }
+    corpus += inv.adhocSip;
     let actions = ['+SIP'];
-    const isLump = (i === 0 && inv.adhocLumpAmount > 0);
-    if (isLump) { corpus += inv.adhocLumpAmount; actions.unshift('+Lumpsum ' + fmtINR(inv.adhocLumpAmount)); }
 
     let isWithdraw = false;
     if (mo === adhocMonth && i > 0) {
@@ -1280,8 +1279,8 @@ function renderInvestments() {
       else { actions.push('<span class="text-bad">SHORT</span>'); }
     }
 
-    if (isWithdraw || isLump || i < 12 || i % 6 === 0) {
-      const cls = (isWithdraw || isLump) ? ' class="adhoc-row"' : '';
+    if (isWithdraw || i < 12 || i % 6 === 0) {
+      const cls = isWithdraw ? ' class="adhoc-row"' : '';
       log1 += '<tr' + cls + '><td>' + fmtMonth(monthStr) + '</td><td class="mono">' + fmtINR(corpus) + '</td><td>' + actions.join(' · ') + '</td></tr>';
     }
   }
