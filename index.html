@@ -1171,9 +1171,9 @@ function renderInvestments() {
   // Fixed plan assumptions
   const START = '2026-04';
   const ADHOC_CORPUS = 50000;   // starting corpus (the lumpsum)
-  const ADHOC_SIP = 5000;       // per month from START
-  const LT_CORPUS = 0;          // starts from zero
-  const LT_SIP = 5000;          // per month from START
+  const ADHOC_SIP = 5000;       // per month from START  -> 15,000 / quarter
+  const LT_CORPUS = 0;
+  const LT_SIP = 3500;          // per month from START  -> 10,500 / quarter
   const adhocRate = inv.adhocReturn / 100 / 12;
   const ltRate = inv.ltReturn / 100 / 12;
 
@@ -1182,42 +1182,51 @@ function renderInvestments() {
   const adhocYears = state.setup.adhocYears;
   const [sy, sm] = START.split('-').map(Number);
 
-  // ---- Adhoc fund ----
+  // Quarter label from the quarter-ENDING month (Jun/Sep/Dec/Mar)
+  const qLabel = (mo, yr) => {
+    if (mo === 6) return 'Q1 · Apr–Jun ' + yr;
+    if (mo === 9) return 'Q2 · Jul–Sep ' + yr;
+    if (mo === 12) return 'Q3 · Oct–Dec ' + yr;
+    return 'Q4 · Jan–Mar ' + yr;
+  };
+
+  // ---- Adhoc fund (quarterly) ----
   let corpus = ADHOC_CORPUS;
-  let log1 = '<div class="small-text" style="margin-bottom: 8px;">Starting corpus ' + fmtINR(ADHOC_CORPUS) + ' in ' + fmtMonth(START) + ', then monthly SIP ' + fmtINR(ADHOC_SIP) + ' from ' + fmtMonth(START) + ' onwards. ' + fmtINR(adhocAmt) + ' withdrawn each ' + monthNames[adhocMonth] + '. Growth at ' + inv.adhocReturn + '% p.a.</div>';
-  log1 += '<table style="width: 100%;"><thead><tr><th>Month</th><th class="mono">Corpus</th><th>Action</th></tr></thead><tbody>';
-  log1 += '<tr class="adhoc-row"><td>' + fmtMonth(START) + '</td><td class="mono">' + fmtINR(ADHOC_CORPUS) + '</td><td>Starting corpus ' + fmtINR(ADHOC_CORPUS) + '</td></tr>';
+  let log1 = '<div class="small-text" style="margin-bottom: 8px;">Starting corpus ' + fmtINR(ADHOC_CORPUS) + ' in ' + fmtMonth(START) + '. SIP ' + fmtINR(ADHOC_SIP) + '/month = <strong>' + fmtINR(ADHOC_SIP * 3) + ' per quarter</strong> from ' + fmtMonth(START) + '. ' + fmtINR(adhocAmt) + ' withdrawn each ' + monthNames[adhocMonth] + '. Growth ' + inv.adhocReturn + '% p.a.</div>';
+  log1 += '<table style="width: 100%;"><thead><tr><th>Quarter</th><th class="mono">SIP Added</th><th class="mono">Corpus</th><th>Action</th></tr></thead><tbody>';
+  log1 += '<tr class="adhoc-row"><td>Apr 2026 (start)</td><td class="mono">—</td><td class="mono">' + fmtINR(ADHOC_CORPUS) + '</td><td>Starting corpus</td></tr>';
 
   let withdrawalsLeft = adhocYears;
-  for (let i = 0; i < 60 && withdrawalsLeft > 0; i++) {
+  let qSip = 0, qActions = [], qWithdraw = false;
+  for (let i = 0; i < 72 && withdrawalsLeft > 0; i++) {
     const tm = (sy * 12 + sm - 1) + i;
     const yr = Math.floor(tm / 12);
     const mo = (tm % 12) + 1;
-    const monthStr = yr + '-' + pad(mo);
 
     corpus = corpus * (1 + adhocRate) + ADHOC_SIP;
-    let actions = ['+SIP ' + fmtINR(ADHOC_SIP)];
+    qSip += ADHOC_SIP;
 
-    let isWithdraw = false;
     if (mo === adhocMonth && i > 0) {
-      if (corpus >= adhocAmt) { corpus -= adhocAmt; actions.push('−' + fmtINR(adhocAmt) + ' adhoc'); withdrawalsLeft--; isWithdraw = true; }
-      else { actions.push('<span class="text-bad">SHORT</span>'); }
+      if (corpus >= adhocAmt) { corpus -= adhocAmt; qActions.push('−' + fmtINR(adhocAmt) + ' adhoc'); withdrawalsLeft--; qWithdraw = true; }
+      else { qActions.push('<span class="text-bad">SHORT</span>'); }
     }
 
-    if (isWithdraw || i < 12 || i % 6 === 0) {
-      log1 += '<tr' + (isWithdraw ? ' class="adhoc-row"' : '') + '><td>' + fmtMonth(monthStr) + '</td><td class="mono">' + fmtINR(corpus) + '</td><td>' + actions.join(' · ') + '</td></tr>';
+    if (mo % 3 === 0) {
+      log1 += '<tr' + (qWithdraw ? ' class="adhoc-row"' : '') + '><td>' + qLabel(mo, yr) + '</td><td class="mono">' + fmtINR(qSip) + '</td><td class="mono">' + fmtINR(corpus) + '</td><td>' + (qActions.length ? qActions.join(' · ') : '—') + '</td></tr>';
+      qSip = 0; qActions = []; qWithdraw = false;
     }
   }
   log1 += '</tbody></table>';
   document.getElementById('adhoc-projection').innerHTML = log1;
 
-  // ---- Long-term cushion ----
+  // ---- Long-term cushion (quarterly) ----
   let lt = LT_CORPUS;
   let ltAtMoratEnd = 0;
-  let log2 = '<div class="small-text" style="margin-bottom: 8px;">Monthly SIP ' + fmtINR(LT_SIP) + ' from ' + fmtMonth(START) + ' onwards, starting corpus ' + fmtINR(LT_CORPUS) + '. Compound growth at ' + inv.ltReturn + '% p.a.</div>';
-  log2 += '<table style="width: 100%;"><thead><tr><th>Month</th><th class="mono">Corpus</th><th>Notes</th></tr></thead><tbody>';
+  let log2 = '<div class="small-text" style="margin-bottom: 8px;">SIP ' + fmtINR(LT_SIP) + '/month = <strong>' + fmtINR(LT_SIP * 3) + ' per quarter</strong> from ' + fmtMonth(START) + '. Starting corpus ' + fmtINR(LT_CORPUS) + '. Compound growth ' + inv.ltReturn + '% p.a.</div>';
+  log2 += '<table style="width: 100%;"><thead><tr><th>Quarter</th><th class="mono">SIP Added</th><th class="mono">Corpus</th><th>Notes</th></tr></thead><tbody>';
 
   const ltMonths = monthsBetween(START, state.setup.moratoriumEnd) + 60;
+  let q2Sip = 0, q2Notes = [];
   for (let i = 0; i < ltMonths; i++) {
     const tm = (sy * 12 + sm - 1) + i;
     const yr = Math.floor(tm / 12);
@@ -1225,15 +1234,17 @@ function renderInvestments() {
     const monthStr = yr + '-' + pad(mo);
 
     lt = lt * (1 + ltRate) + LT_SIP;
+    q2Sip += LT_SIP;
 
-    if (i === 0) {
-      log2 += '<tr class="adhoc-row"><td>' + fmtMonth(monthStr) + '</td><td class="mono">' + fmtINR(lt) + '</td><td>SIP starts &mdash; ' + fmtINR(LT_SIP) + '/month</td></tr>';
+    if (monthsBetween(monthStr, state.setup.moratoriumEnd) === 0) {
+      ltAtMoratEnd = lt;
+      q2Notes.push('<span class="pill good">Phase 2 begins</span>');
     }
-    if ((i + 1) % 12 === 0) {
-      let note = '';
-      if (monthsBetween(monthStr, state.setup.moratoriumEnd) === 0) { note = '<span class="pill good">Phase 2 begins</span>'; ltAtMoratEnd = lt; }
-      else if (Math.abs(monthsBetween(monthStr, state.setup.moratoriumEnd)) <= 6) { note = '<span class="small-text">near moratorium end</span>'; }
-      log2 += '<tr' + (note.includes('Phase 2') ? ' class="adhoc-row"' : '') + '><td>' + fmtMonth(monthStr) + '</td><td class="mono">' + fmtINR(lt) + '</td><td>' + note + '</td></tr>';
+
+    if (mo % 3 === 0) {
+      const isPhase2 = q2Notes.some(n => n.indexOf('Phase 2') !== -1);
+      log2 += '<tr' + (isPhase2 ? ' class="adhoc-row"' : '') + '><td>' + qLabel(mo, yr) + '</td><td class="mono">' + fmtINR(q2Sip) + '</td><td class="mono">' + fmtINR(lt) + '</td><td>' + (q2Notes.length ? q2Notes.join(' · ') : '') + '</td></tr>';
+      q2Sip = 0; q2Notes = [];
     }
   }
   log2 += '</tbody></table>';
@@ -1243,7 +1254,7 @@ function renderInvestments() {
   document.getElementById('lt-projection').innerHTML = log2;
 
   const investTotEl = document.getElementById('invest-total');
-  if (investTotEl) investTotEl.innerHTML = '<strong>Plan:</strong> starting corpus ' + fmtINR(ADHOC_CORPUS + LT_CORPUS) + ' &middot; combined monthly SIP ' + fmtINR(ADHOC_SIP + LT_SIP) + ' from ' + fmtMonth(START);
+  if (investTotEl) investTotEl.innerHTML = '<strong>Plan:</strong> starting corpus ' + fmtINR(ADHOC_CORPUS) + ' &middot; SIP ' + fmtINR(ADHOC_SIP + LT_SIP) + '/month = ' + fmtINR((ADHOC_SIP + LT_SIP) * 3) + ' per quarter, from ' + fmtMonth(START);
 }
 
 function renderProjection() {
