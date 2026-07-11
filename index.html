@@ -1243,61 +1243,76 @@ function renderDisbursements() {
 
 function renderInvestments() {
   const inv = state.investments;
-  // Adhoc fund projection
+  const pad = n => String(n).padStart(2, '0');
+  const earliestSipMonth = (rows, fallback) => {
+    const ds = (rows || []).map(r => r.date).filter(Boolean).sort();
+    return ds.length ? ds[0].substring(0, 7) : fallback;
+  };
+  const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // ---- Adhoc fund projection ----
   const r1 = inv.adhocReturn / 100 / 12;
-  let corpus = inv.adhocCorpus;
-  // Project monthly with SIP for 36 months, withdrawing 1L each March
   const adhocAmt = state.setup.adhocAmount;
   const adhocMonth = state.setup.adhocMonth;
   const adhocYears = state.setup.adhocYears;
-  const [yStart, mStart] = state.setup.asOf.split('-').map(Number);
+  const adhocStart = earliestSipMonth(inv.adhocSipRows, state.setup.asOf);
+  const [ay, am] = adhocStart.split('-').map(Number);
 
-  let log1 = '<div class="small-text" style="margin-bottom: 8px;">Projection: monthly SIP added, ' + fmtINR(adhocAmt) + ' withdrawn each ' + ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][adhocMonth] + '</div>';
+  let corpus = inv.adhocCorpus;
+  let log1 = '<div class="small-text" style="margin-bottom: 8px;">From ' + fmtMonth(adhocStart) + ': monthly SIP ' + fmtINR(inv.adhocSip) + ' added, ' + fmtINR(adhocAmt) + ' withdrawn each ' + monthNames[adhocMonth] + (inv.adhocLumpAmount ? '. Lumpsum ' + fmtINR(inv.adhocLumpAmount) + ' added in ' + fmtMonth(adhocStart) : '') + '.</div>';
   log1 += '<table style="width: 100%;"><thead><tr><th>Month</th><th class="mono">Corpus</th><th>Action</th></tr></thead><tbody>';
 
   let withdrawalsLeft = adhocYears;
-  for (let i = 0; i < 48 && withdrawalsLeft > 0; i++) {
-    corpus = corpus * (1 + r1) + inv.adhocSip;
-    const totalMonths = (yStart * 12 + mStart - 1) + i + 1;
+  for (let i = 0; i < 60 && withdrawalsLeft > 0; i++) {
+    const totalMonths = (ay * 12 + am - 1) + i;
     const yr = Math.floor(totalMonths / 12);
     const mo = (totalMonths % 12) + 1;
-    let action = '+SIP';
+    const monthStr = yr + '-' + pad(mo);
+
+    corpus = corpus * (1 + r1) + inv.adhocSip;
+    let actions = ['+SIP'];
+    const isLump = (i === 0 && inv.adhocLumpAmount > 0);
+    if (isLump) { corpus += inv.adhocLumpAmount; actions.unshift('+Lumpsum ' + fmtINR(inv.adhocLumpAmount)); }
+
+    let isWithdraw = false;
     if (mo === adhocMonth && i > 0) {
-      if (corpus >= adhocAmt) {
-        corpus -= adhocAmt;
-        action = '−' + fmtINR(adhocAmt) + ' adhoc';
-        withdrawalsLeft--;
-      } else {
-        action = '<span class="text-bad">SHORT</span>';
-      }
+      if (corpus >= adhocAmt) { corpus -= adhocAmt; actions.push('−' + fmtINR(adhocAmt) + ' adhoc'); withdrawalsLeft--; isWithdraw = true; }
+      else { actions.push('<span class="text-bad">SHORT</span>'); }
     }
-    if (action !== '+SIP' || i % 6 === 0 || i < 3) {
-      log1 += '<tr' + (action.includes('adhoc') ? ' class="adhoc-row"' : '') + '><td>' + fmtMonth(yr + '-' + String(mo).padStart(2, '0')) + '</td><td class="mono">' + fmtINR(corpus) + '</td><td>' + action + '</td></tr>';
+
+    if (isWithdraw || isLump || i < 12 || i % 6 === 0) {
+      const cls = (isWithdraw || isLump) ? ' class="adhoc-row"' : '';
+      log1 += '<tr' + cls + '><td>' + fmtMonth(monthStr) + '</td><td class="mono">' + fmtINR(corpus) + '</td><td>' + actions.join(' · ') + '</td></tr>';
     }
   }
   log1 += '</tbody></table>';
   document.getElementById('adhoc-projection').innerHTML = log1;
 
-  // Long-term projection (just compound)
+  // ---- Long-term projection ----
   const r2 = inv.ltReturn / 100 / 12;
+  const ltStart = earliestSipMonth(inv.ltSipRows, state.setup.asOf);
+  const [ly, lm] = ltStart.split('-').map(Number);
   let lt = inv.ltCorpus;
-  const moratMonths = monthsBetween(state.setup.asOf, state.setup.moratoriumEnd);
-  let log2 = '<div class="small-text" style="margin-bottom: 8px;">Compound growth at ' + inv.ltReturn + '% with monthly SIP of ' + fmtINR(inv.ltSip) + '</div>';
-  log2 += '<table style="width: 100%;"><thead><tr><th>Year</th><th class="mono">Corpus</th><th>Notes</th></tr></thead><tbody>';
   let ltAtMoratEnd = 0;
-  for (let i = 0; i < moratMonths + 60; i++) {
+  let log2 = '<div class="small-text" style="margin-bottom: 8px;">From ' + fmtMonth(ltStart) + ': compound growth at ' + inv.ltReturn + '% with monthly SIP ' + fmtINR(inv.ltSip) + (inv.ltLumpAmount ? '. Lumpsum ' + fmtINR(inv.ltLumpAmount) + ' added in ' + fmtMonth(ltStart) : '') + '.</div>';
+  log2 += '<table style="width: 100%;"><thead><tr><th>Month</th><th class="mono">Corpus</th><th>Notes</th></tr></thead><tbody>';
+
+  const ltMonths = monthsBetween(ltStart, state.setup.moratoriumEnd) + 60;
+  for (let i = 0; i < ltMonths; i++) {
+    const totalMonths = (ly * 12 + lm - 1) + i;
+    const yr = Math.floor(totalMonths / 12);
+    const mo = (totalMonths % 12) + 1;
+    const monthStr = yr + '-' + pad(mo);
+
     lt = lt * (1 + r2) + inv.ltSip;
+    if (i === 0 && inv.ltLumpAmount > 0) {
+      lt += inv.ltLumpAmount;
+      log2 += '<tr class="adhoc-row"><td>' + fmtMonth(monthStr) + '</td><td class="mono">' + fmtINR(lt) + '</td><td>+Lumpsum ' + fmtINR(inv.ltLumpAmount) + ' · SIP starts</td></tr>';
+    }
     if ((i + 1) % 12 === 0) {
-      const yr = yStart + Math.floor((mStart - 1 + i + 1) / 12);
-      const mo = ((mStart - 1 + i + 1) % 12) + 1;
-      const monthStr = yr + '-' + String(mo).padStart(2, '0');
       let note = '';
-      if (monthsBetween(monthStr, state.setup.moratoriumEnd) === 0) {
-        note = '<span class="pill good">Phase 2 begins</span>';
-        ltAtMoratEnd = lt;
-      } else if (Math.abs(monthsBetween(monthStr, state.setup.moratoriumEnd)) <= 6) {
-        note = '<span class="small-text">near moratorium end</span>';
-      }
+      if (monthsBetween(monthStr, state.setup.moratoriumEnd) === 0) { note = '<span class="pill good">Phase 2 begins</span>'; ltAtMoratEnd = lt; }
+      else if (Math.abs(monthsBetween(monthStr, state.setup.moratoriumEnd)) <= 6) { note = '<span class="small-text">near moratorium end</span>'; }
       log2 += '<tr' + (note.includes('Phase 2') ? ' class="adhoc-row"' : '') + '><td>' + fmtMonth(monthStr) + '</td><td class="mono">' + fmtINR(lt) + '</td><td>' + note + '</td></tr>';
     }
   }
