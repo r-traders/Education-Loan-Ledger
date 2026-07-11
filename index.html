@@ -855,7 +855,7 @@
         <div class="row-3">
           <div>
             <label>Start Month</label>
-            <input type="month" id="gic-start" value="2024-12" onchange="saveGicSettings()" />
+            <input type="month" id="gic-start" value="2025-01" onchange="saveGicSettings()" />
           </div>
           <div>
             <label>End Month</label>
@@ -958,9 +958,9 @@ let state = {
     rows: {},
   },
   gic: {
-    start: '2024-12',
+    start: '2025-01',
     end: '2029-12',
-    v: 3,
+    v: 4,
     opening: 0,
     rate: 66,
     rows: {},
@@ -985,6 +985,15 @@ function load() {
       if (!state.expenses.rows || typeof state.expenses.rows !== 'object') state.expenses.rows = {};
       if (!state.gic.rows || typeof state.gic.rows !== 'object') state.gic.rows = {};
       if (!state.gic.v || state.gic.v < 3) { state.gic.end = '2029-12'; state.gic.v = 3; migrated = true; }
+      if (state.gic.v < 4) {
+        const dec = state.gic.rows['2024-12'];
+        const decEntry = (typeof dec === 'number') ? dec : (dec && dec.entry) || 0;
+        if (decEntry) state.gic.opening = (state.gic.opening || 0) + decEntry;
+        delete state.gic.rows['2024-12'];
+        state.gic.start = '2025-01';
+        state.gic.v = 4;
+        migrated = true;
+      }
       if (!Array.isArray(state.customReminders)) state.customReminders = [];
       if (!Array.isArray(state.universityFees)) state.universityFees = [];
       if (!state.fxCadInr || isNaN(state.fxCadInr)) state.fxCadInr = 67.30;
@@ -1571,7 +1580,7 @@ function renderExpenses() {
 }
 
 function saveGicSettings() {
-  state.gic.start = document.getElementById('gic-start').value || '2024-12';
+  state.gic.start = document.getElementById('gic-start').value || '2025-01';
   state.gic.end = document.getElementById('gic-end').value || '2029-12';
   state.gic.opening = parseFloat(document.getElementById('gic-opening').value) || 0;
   state.gic.rate = parseFloat(document.getElementById('gic-rate').value) || 66;
@@ -1598,7 +1607,7 @@ function renderGic() {
   if (!tbody) return;
   const g = state.gic;
   const rate = g.rate || 66;
-  const [sy, sm] = (g.start || '2024-12').split('-').map(Number);
+  const [sy, sm] = (g.start || '2025-01').split('-').map(Number);
   const [ey, em] = (g.end || '2029-12').split('-').map(Number);
   const startIdx = sy * 12 + sm - 1;
   const endIdx = ey * 12 + em - 1;
