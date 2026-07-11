@@ -648,6 +648,19 @@
             </div>
           </div>
           <div class="divider"></div>
+          <div class="row">
+            <div>
+              <label>Lumpsum Month</label>
+              <input type="month" id="adhoc-lump-date" />
+            </div>
+            <div>
+              <label>Lumpsum Amount (₹)</label>
+              <input type="number" id="adhoc-lump-amount" placeholder="25000" />
+            </div>
+          </div>
+          <button onclick="addAdhocLumpsum()">Add Lumpsum</button>
+          <div id="adhoc-lump-list" style="margin-top: 8px;"></div>
+          <div class="divider"></div>
           <div id="adhoc-projection"></div>
         </div>
 
@@ -676,6 +689,19 @@
               <button onclick="saveInvestments()">Save</button>
             </div>
           </div>
+          <div class="divider"></div>
+          <div class="row">
+            <div>
+              <label>Lumpsum Month</label>
+              <input type="month" id="lt-lump-date" />
+            </div>
+            <div>
+              <label>Lumpsum Amount (₹)</label>
+              <input type="number" id="lt-lump-amount" placeholder="100000" />
+            </div>
+          </div>
+          <button onclick="addLtLumpsum()">Add Lumpsum</button>
+          <div id="lt-lump-list" style="margin-top: 8px;"></div>
           <div class="divider"></div>
           <div id="lt-projection"></div>
         </div>
@@ -868,6 +894,8 @@ let state = {
     ltCorpus: 0,
     ltSip: 3500,
     ltReturn: 14,
+    adhocLumpsums: [],
+    ltLumpsums: [],
   },
   bankInsurance: {
     processing: 0,
@@ -896,6 +924,8 @@ function load() {
       if (!Array.isArray(state.customReminders)) state.customReminders = [];
       if (!Array.isArray(state.universityFees)) state.universityFees = [];
       if (!state.fxCadInr || isNaN(state.fxCadInr)) state.fxCadInr = 67.30;
+      if (!Array.isArray(state.investments.adhocLumpsums)) state.investments.adhocLumpsums = [];
+      if (!Array.isArray(state.investments.ltLumpsums)) state.investments.ltLumpsums = [];
       if (!state.completedReminders || typeof state.completedReminders !== 'object') state.completedReminders = {};
     }
   } catch (e) { console.warn('Load failed', e); }
@@ -1184,6 +1214,56 @@ function renderDisbursements() {
   if (t) t.innerHTML = '<div class="list-item" style="border-top: 2px solid var(--rule);"><div><strong>Total</strong></div><div class="amount"><strong>' + fmtINR(total) + '</strong></div></div>';
 }
 
+function renderLumpsumList(listId, arr, delFn) {
+  const el = document.getElementById(listId);
+  if (!el) return;
+  if (!arr.length) { el.innerHTML = '<div class="small-text">No lumpsums recorded.</div>'; return; }
+  const sorted = [...arr].sort((a, b) => a.date.localeCompare(b.date));
+  let total = 0, html = '';
+  sorted.forEach(d => {
+    const idx = arr.indexOf(d);
+    total += d.amount || 0;
+    html += '<div class="list-item"><div><strong>' + fmtMonth(d.date) + '</strong></div><div class="gap-row"><span class="amount">' + fmtINR(d.amount) + '</span><button class="icon" onclick="' + delFn + '(' + idx + ')">×</button></div></div>';
+  });
+  html += '<div class="list-item" style="border-top: 2px solid var(--rule);"><div><strong>Total lumpsum</strong></div><div class="amount"><strong>' + fmtINR(total) + '</strong></div></div>';
+  el.innerHTML = html;
+}
+
+function renderInvestmentLumpsums() {
+  renderLumpsumList('adhoc-lump-list', state.investments.adhocLumpsums || [], 'deleteAdhocLumpsum');
+  renderLumpsumList('lt-lump-list', state.investments.ltLumpsums || [], 'deleteLtLumpsum');
+}
+
+function addAdhocLumpsum() {
+  const date = document.getElementById('adhoc-lump-date').value;
+  const amount = parseFloat(document.getElementById('adhoc-lump-amount').value);
+  if (!date || !amount) { alert('Please enter month and amount'); return; }
+  state.investments.adhocLumpsums.push({ date, amount });
+  document.getElementById('adhoc-lump-date').value = '';
+  document.getElementById('adhoc-lump-amount').value = '';
+  save(); renderInvestmentLumpsums();
+}
+
+function deleteAdhocLumpsum(idx) {
+  state.investments.adhocLumpsums.splice(idx, 1);
+  save(); renderInvestmentLumpsums();
+}
+
+function addLtLumpsum() {
+  const date = document.getElementById('lt-lump-date').value;
+  const amount = parseFloat(document.getElementById('lt-lump-amount').value);
+  if (!date || !amount) { alert('Please enter month and amount'); return; }
+  state.investments.ltLumpsums.push({ date, amount });
+  document.getElementById('lt-lump-date').value = '';
+  document.getElementById('lt-lump-amount').value = '';
+  save(); renderInvestmentLumpsums();
+}
+
+function deleteLtLumpsum(idx) {
+  state.investments.ltLumpsums.splice(idx, 1);
+  save(); renderInvestmentLumpsums();
+}
+
 function renderInvestments() {
   const inv = state.investments;
   // Adhoc fund projection
@@ -1252,6 +1332,8 @@ function renderInvestments() {
 
   const investTotEl = document.getElementById('invest-total');
   if (investTotEl) investTotEl.innerHTML = '<strong>Totals now:</strong> combined corpus ' + fmtINR(inv.adhocCorpus + inv.ltCorpus) + ' &middot; combined monthly SIP ' + fmtINR(inv.adhocSip + inv.ltSip);
+
+  renderInvestmentLumpsums();
 }
 
 function renderProjection() {
