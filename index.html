@@ -639,6 +639,13 @@
           </div>
           <div class="row">
             <div>
+              <label>SIP Start Date</label>
+              <input type="date" id="adhoc-sip-date" />
+            </div>
+            <div></div>
+          </div>
+          <div class="row">
+            <div>
               <label>Expected Annual Return (%)</label>
               <input type="number" id="adhoc-return" value="6.5" step="0.1" />
             </div>
@@ -678,6 +685,13 @@
               <label>Monthly SIP (₹)</label>
               <input type="number" id="lt-sip" value="3500" />
             </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>SIP Start Date</label>
+              <input type="date" id="lt-sip-date" />
+            </div>
+            <div></div>
           </div>
           <div class="row">
             <div>
@@ -894,6 +908,8 @@ let state = {
     ltCorpus: 0,
     ltSip: 3500,
     ltReturn: 14,
+    adhocSipDate: '',
+    ltSipDate: '',
     adhocLumpsums: [],
     ltLumpsums: [],
   },
@@ -1672,6 +1688,8 @@ function saveInvestments() {
   state.investments.ltCorpus = parseFloat(document.getElementById('lt-corpus').value) || 0;
   state.investments.ltSip = parseFloat(document.getElementById('lt-sip').value) || 0;
   state.investments.ltReturn = parseFloat(document.getElementById('lt-return').value) || 0;
+  state.investments.adhocSipDate = document.getElementById('adhoc-sip-date').value;
+  state.investments.ltSipDate = document.getElementById('lt-sip-date').value;
   save(); renderInvestments();
 }
 
@@ -1823,6 +1841,8 @@ function populateForm() {
   document.getElementById('lt-corpus').value = state.investments.ltCorpus;
   document.getElementById('lt-sip').value = state.investments.ltSip;
   document.getElementById('lt-return').value = state.investments.ltReturn;
+  document.getElementById('adhoc-sip-date').value = state.investments.adhocSipDate || '';
+  document.getElementById('lt-sip-date').value = state.investments.ltSipDate || '';
 
   document.getElementById('bi-processing').value = state.bankInsurance.processing;
   document.getElementById('bi-insurance').value = state.bankInsurance.insurance;
