@@ -357,6 +357,8 @@
     font-size: 12px;
     text-align: right;
   }
+  th.mono, td.mono { text-align: right; }
+  .amount { text-align: right; }
   input[type="number"], input[type="text"], input[type="date"], input[type="month"], select {
     max-width: 300px;
   }
@@ -1035,7 +1037,7 @@ function fmtINR(n, decimals = 0) {
   return sign + '₹' + intPart + (parts[1] ? '.' + parts[1] : '');
 }
 
-function fmtCAD(n, decimals = 0) {
+function fmtCAD(n, decimals = 2) {
   if (n === null || n === undefined || isNaN(n)) return '—';
   const sign = n < 0 ? '-' : '';
   n = Math.abs(n);
@@ -1043,7 +1045,8 @@ function fmtCAD(n, decimals = 0) {
   const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   return sign + 'C$' + intPart + (parts[1] ? '.' + parts[1] : '');
 }
-function fmtFee(n, cur) { return cur === 'CAD' ? fmtCAD(n) : fmtINR(n); }
+function fmtINR2(n) { return fmtINR(n, 2); }
+function fmtFee(n, cur) { return cur === 'CAD' ? fmtCAD(n) : fmtINR(n, 2); }
 function fmtMonth(yyyymm) {
   const [y, m] = yyyymm.split('-').map(Number);
   return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1] + ' ' + y;
@@ -1570,7 +1573,7 @@ function renderExpenses() {
     html += '<td><input type="number" class="cell-input" value="' + (r.meal || '') + '" placeholder="0" onchange="updateExpense(\'' + key + '\', \'meal\', this.value)" /></td>';
     html += '<td><input type="number" class="cell-input" value="' + (r.misc || '') + '" placeholder="0" onchange="updateExpense(\'' + key + '\', \'misc\', this.value)" /></td>';
     html += '<td class="mono">' + fmtCAD(rowTotal) + '</td>';
-    html += '<td class="mono">' + fmtINR(rowTotal * rate) + '</td>';
+    html += '<td class="mono">' + fmtINR2(rowTotal * rate) + '</td>';
     html += '</tr>';
   }
   tbody.innerHTML = html;
@@ -1582,12 +1585,12 @@ function renderExpenses() {
   const sum = document.getElementById('expenses-summary');
   if (sum) {
     let sh = '<div class="row-4">';
-    sh += '<div class="stat-block"><div class="label">Accommodation</div><div class="value currency">' + fmtCAD(tAcc) + '</div><div class="sub">' + fmtINR(tAcc * rate) + '</div></div>';
-    sh += '<div class="stat-block"><div class="label">Meals</div><div class="value currency">' + fmtCAD(tMeal) + '</div><div class="sub">' + fmtINR(tMeal * rate) + '</div></div>';
-    sh += '<div class="stat-block"><div class="label">Miscellaneous</div><div class="value currency">' + fmtCAD(tMisc) + '</div><div class="sub">' + fmtINR(tMisc * rate) + '</div></div>';
-    sh += '<div class="stat-block accent"><div class="label">Grand Total</div><div class="value currency">' + fmtCAD(grand) + '</div><div class="sub">' + fmtINR(grand * rate) + '</div></div>';
+    sh += '<div class="stat-block"><div class="label">Accommodation</div><div class="value currency">' + fmtCAD(tAcc) + '</div><div class="sub">' + fmtINR2(tAcc * rate) + '</div></div>';
+    sh += '<div class="stat-block"><div class="label">Meals</div><div class="value currency">' + fmtCAD(tMeal) + '</div><div class="sub">' + fmtINR2(tMeal * rate) + '</div></div>';
+    sh += '<div class="stat-block"><div class="label">Miscellaneous</div><div class="value currency">' + fmtCAD(tMisc) + '</div><div class="sub">' + fmtINR2(tMisc * rate) + '</div></div>';
+    sh += '<div class="stat-block accent"><div class="label">Grand Total</div><div class="value currency">' + fmtCAD(grand) + '</div><div class="sub">' + fmtINR2(grand * rate) + '</div></div>';
     sh += '</div>';
-    sh += '<div class="small-text" style="margin-top: 8px;">' + months + ' months &middot; average ' + fmtCAD(months ? grand / months : 0) + ' / month (' + fmtINR(months ? (grand * rate) / months : 0) + ')</div>';
+    sh += '<div class="small-text" style="margin-top: 8px;">' + months + ' months &middot; average ' + fmtCAD(months ? grand / months : 0) + ' / month (' + fmtINR2(months ? (grand * rate) / months : 0) + ')</div>';
     sum.innerHTML = sh;
   }
 }
@@ -1651,7 +1654,7 @@ function renderGic() {
     html += '<td class="mono">' + fmtCAD(running) + '</td>';
     html += '<td><input type="number" class="cell-input" value="' + (r.balance !== null ? r.balance : '') + '" placeholder="' + Math.round(running) + '" onchange="updateGic(\'' + key + '\', \'balance\', this.value)" /></td>';
     html += '<td class="mono">' + (used !== null ? fmtCAD(used) : '—') + '</td>';
-    html += '<td class="mono">' + fmtINR(shownBal * rate) + '</td>';
+    html += '<td class="mono">' + fmtINR2(shownBal * rate) + '</td>';
     html += '</tr>';
   }
   tbody.innerHTML = html;
@@ -1661,12 +1664,12 @@ function renderGic() {
   const sum = document.getElementById('gic-summary');
   if (sum) {
     let sh = '<div class="row-4">';
-    sh += '<div class="stat-block"><div class="label">Opening Deposit</div><div class="value currency">' + fmtCAD(g.opening || 0) + '</div><div class="sub">' + fmtINR((g.opening || 0) * rate) + '</div></div>';
-    sh += '<div class="stat-block"><div class="label">Total Entries</div><div class="value currency">' + fmtCAD(totalEntries) + '</div><div class="sub">' + fmtINR(totalEntries * rate) + '</div></div>';
-    sh += '<div class="stat-block"><div class="label">Running Total</div><div class="value currency">' + fmtCAD(running) + '</div><div class="sub">' + fmtINR(running * rate) + '</div></div>';
-    sh += '<div class="stat-block accent"><div class="label">Overall Balance</div><div class="value currency">' + fmtCAD(overall) + '</div><div class="sub">' + fmtINR(overall * rate) + '</div></div>';
+    sh += '<div class="stat-block"><div class="label">Opening Deposit</div><div class="value currency">' + fmtCAD(g.opening || 0) + '</div><div class="sub">' + fmtINR2((g.opening || 0) * rate) + '</div></div>';
+    sh += '<div class="stat-block"><div class="label">Total Entries</div><div class="value currency">' + fmtCAD(totalEntries) + '</div><div class="sub">' + fmtINR2(totalEntries * rate) + '</div></div>';
+    sh += '<div class="stat-block"><div class="label">Running Total</div><div class="value currency">' + fmtCAD(running) + '</div><div class="sub">' + fmtINR2(running * rate) + '</div></div>';
+    sh += '<div class="stat-block accent"><div class="label">Overall Balance</div><div class="value currency">' + fmtCAD(overall) + '</div><div class="sub">' + fmtINR2(overall * rate) + '</div></div>';
     sh += '</div>';
-    sh += '<div class="small-text" style="margin-top: 8px;">Used to date: <strong>' + (lastUsed !== null ? fmtCAD(lastUsed) + ' (' + fmtINR(lastUsed * rate) + ')' : '—') + '</strong>. Overall Balance uses the latest month where you entered a balance; otherwise it falls back to the running total.</div>';
+    sh += '<div class="small-text" style="margin-top: 8px;">Used to date: <strong>' + (lastUsed !== null ? fmtCAD(lastUsed) + ' (' + fmtINR2(lastUsed * rate) + ')' : '—') + '</strong>. Overall Balance uses the latest month where you entered a balance; otherwise it falls back to the running total.</div>';
     sum.innerHTML = sh;
   }
 }
@@ -1937,7 +1940,7 @@ function renderUniversityFees() {
       const realIdx = state.universityFees.indexOf(d);
       const cur = d.currency || 'INR';
       const rate = d.rate || fallbackFx;
-      const conv = cur === 'CAD' ? ' <span class="small-text">≈ ' + fmtINR((d.amount || 0) * rate) + '</span>' : '';
+      const conv = cur === 'CAD' ? ' <span class="small-text">≈ ' + fmtINR2((d.amount || 0) * rate) + '</span>' : '';
       const rateNote = cur === 'CAD' ? ' <span class="small-text">@ ₹' + rate + '</span>' : '';
       html += '<div class="list-item">';
       html += '<div><strong>' + fmtMonth(d.date) + '</strong> <span class="small-text">' + cur + '</span>' + rateNote + '</div>';
@@ -1950,8 +1953,8 @@ function renderUniversityFees() {
   const t = document.getElementById('univ-total');
   if (t) {
     let h = '';
-    h += '<div class="list-item" style="border-top: 2px solid var(--rule);"><div><strong>Total (C$ CAD)</strong></div><div class="amount"><strong>' + fmtCAD(totalCAD) + '</strong> <span class="small-text">≈ ' + fmtINR(cadInInr) + '</span></div></div>';
-    h += '<div class="list-item" style="border-top: 2px solid var(--ink);"><div><strong>Grand Total (₹ INR incl. CAD)</strong><div class="small-text">each transfer converted at its own rate</div></div><div class="amount"><strong>' + fmtINR(totalINR + cadInInr) + '</strong></div></div>';
+    h += '<div class="list-item" style="border-top: 2px solid var(--rule);"><div><strong>Total (C$ CAD)</strong></div><div class="amount"><strong>' + fmtCAD(totalCAD) + '</strong> <span class="small-text">≈ ' + fmtINR2(cadInInr) + '</span></div></div>';
+    h += '<div class="list-item" style="border-top: 2px solid var(--ink);"><div><strong>Grand Total (₹ INR incl. CAD)</strong><div class="small-text">each transfer converted at its own rate</div></div><div class="amount"><strong>' + fmtINR2(totalINR + cadInInr) + '</strong></div></div>';
     t.innerHTML = h;
   }
 }
