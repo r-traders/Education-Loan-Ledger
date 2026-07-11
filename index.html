@@ -633,43 +633,6 @@
           <div class="info-box" style="margin-top: 0; margin-bottom: 12px; padding: 8px 10px; font-size: 12px;">
             Suggested fund: <strong>HDFC Liquid Fund — Direct — Growth</strong>. Fund March adhoc payments year on year.
           </div>
-          <div class="row">
-            <div>
-              <label>Current Corpus (₹)</label>
-              <input type="number" id="adhoc-corpus" value="50000" onchange="saveInvestments()" />
-            </div>
-            <div>
-              <label>Monthly SIP (₹)</label>
-              <input type="number" id="adhoc-sip" value="5000" onchange="saveInvestments()" />
-            </div>
-          </div>
-          <div class="row">
-            <div>
-              <label>Expected Annual Return (%)</label>
-              <input type="number" id="adhoc-return" value="6.5" step="0.1" onchange="saveInvestments()" />
-            </div>
-            <div></div>
-          </div>
-
-          <div class="divider"></div>
-          <table class="mini-table">
-            <thead><tr><th>SIP</th><th>Date</th><th>Amount (₹)</th></tr></thead>
-            <tbody>
-              <tr><td>SIP 1</td><td><input type="date" id="adhoc-sip1-date" onchange="saveInvestments()" /></td><td><input type="number" id="adhoc-sip1-amt" placeholder="5000" onchange="saveInvestments()" /></td></tr>
-              <tr><td>SIP 2</td><td><input type="date" id="adhoc-sip2-date" onchange="saveInvestments()" /></td><td><input type="number" id="adhoc-sip2-amt" placeholder="5000" onchange="saveInvestments()" /></td></tr>
-              <tr><td>SIP 3</td><td><input type="date" id="adhoc-sip3-date" onchange="saveInvestments()" /></td><td><input type="number" id="adhoc-sip3-amt" placeholder="5000" onchange="saveInvestments()" /></td></tr>
-            </tbody>
-          </table>
-          <div class="row" style="margin-top: 12px;">
-            <div>
-              <label>Lumpsum Amount (₹)</label>
-              <input type="number" id="adhoc-lump-amt" placeholder="25000" onchange="saveInvestments()" />
-            </div>
-            <div></div>
-          </div>
-          <div id="adhoc-tbl-total" class="small-text" style="margin-top: 8px;"></div>
-
-          <div class="divider"></div>
           <div id="adhoc-projection"></div>
         </div>
 
@@ -678,43 +641,6 @@
           <div class="info-box" style="margin-top: 0; margin-bottom: 12px; padding: 8px 10px; font-size: 12px;">
             Suggested fund: <strong>ICICI Prudential Dividend Yield Equity Fund — Direct — Growth</strong>. Defensive equity, lower volatility than Nifty.
           </div>
-          <div class="row">
-            <div>
-              <label>Current Corpus (₹)</label>
-              <input type="number" id="lt-corpus" value="0" onchange="saveInvestments()" />
-            </div>
-            <div>
-              <label>Monthly SIP (₹)</label>
-              <input type="number" id="lt-sip" value="3500" onchange="saveInvestments()" />
-            </div>
-          </div>
-          <div class="row">
-            <div>
-              <label>Expected Annual Return (%)</label>
-              <input type="number" id="lt-return" value="14" step="0.1" onchange="saveInvestments()" />
-            </div>
-            <div></div>
-          </div>
-
-          <div class="divider"></div>
-          <table class="mini-table">
-            <thead><tr><th>SIP</th><th>Date</th><th>Amount (₹)</th></tr></thead>
-            <tbody>
-              <tr><td>SIP 1</td><td><input type="date" id="lt-sip1-date" onchange="saveInvestments()" /></td><td><input type="number" id="lt-sip1-amt" placeholder="3500" onchange="saveInvestments()" /></td></tr>
-              <tr><td>SIP 2</td><td><input type="date" id="lt-sip2-date" onchange="saveInvestments()" /></td><td><input type="number" id="lt-sip2-amt" placeholder="3500" onchange="saveInvestments()" /></td></tr>
-              <tr><td>SIP 3</td><td><input type="date" id="lt-sip3-date" onchange="saveInvestments()" /></td><td><input type="number" id="lt-sip3-amt" placeholder="3500" onchange="saveInvestments()" /></td></tr>
-            </tbody>
-          </table>
-          <div class="row" style="margin-top: 12px;">
-            <div>
-              <label>Lumpsum Amount (₹)</label>
-              <input type="number" id="lt-lump-amt" placeholder="100000" onchange="saveInvestments()" />
-            </div>
-            <div></div>
-          </div>
-          <div id="lt-tbl-total" class="small-text" style="margin-top: 8px;"></div>
-
-          <div class="divider"></div>
           <div id="lt-projection"></div>
         </div>
       </div>
@@ -1251,7 +1177,7 @@ function renderInvestments() {
   const adhocAmt = state.setup.adhocAmount;
   const adhocMonth = state.setup.adhocMonth;
   const adhocYears = state.setup.adhocYears;
-  const adhocStart = earliestSipMonth(inv.adhocSipRows, state.setup.asOf);
+  const adhocStart = '2026-04';
   const [ay, am] = adhocStart.split('-').map(Number);
 
   let corpus = inv.adhocCorpus;
@@ -1289,7 +1215,7 @@ function renderInvestments() {
 
   // ---- Long-term projection ----
   const r2 = inv.ltReturn / 100 / 12;
-  const ltStart = earliestSipMonth(inv.ltSipRows, state.setup.asOf);
+  const ltStart = '2026-04';
   const [ly, lm] = ltStart.split('-').map(Number);
   let lt = inv.ltCorpus;
   let ltAtMoratEnd = 0;
@@ -1814,22 +1740,6 @@ function populateForm() {
   document.getElementById('setup-adhoc-amt').value = state.setup.adhocAmount;
   document.getElementById('setup-adhoc-month').value = state.setup.adhocMonth;
   document.getElementById('setup-adhoc-years').value = state.setup.adhocYears;
-  document.getElementById('adhoc-corpus').value = state.investments.adhocCorpus;
-  document.getElementById('adhoc-sip').value = state.investments.adhocSip;
-  document.getElementById('adhoc-return').value = state.investments.adhocReturn;
-  document.getElementById('lt-corpus').value = state.investments.ltCorpus;
-  document.getElementById('lt-sip').value = state.investments.ltSip;
-  document.getElementById('lt-return').value = state.investments.ltReturn;
-  for (let i = 1; i <= 3; i++) {
-    const ar = state.investments.adhocSipRows[i - 1] || { date: '', amount: 0 };
-    const lr = state.investments.ltSipRows[i - 1] || { date: '', amount: 0 };
-    document.getElementById('adhoc-sip' + i + '-date').value = ar.date || '';
-    document.getElementById('adhoc-sip' + i + '-amt').value = ar.amount || '';
-    document.getElementById('lt-sip' + i + '-date').value = lr.date || '';
-    document.getElementById('lt-sip' + i + '-amt').value = lr.amount || '';
-  }
-  document.getElementById('adhoc-lump-amt').value = state.investments.adhocLumpAmount || '';
-  document.getElementById('lt-lump-amt').value = state.investments.ltLumpAmount || '';
 
   document.getElementById('bi-processing').value = state.bankInsurance.processing;
   document.getElementById('bi-insurance').value = state.bankInsurance.insurance;
