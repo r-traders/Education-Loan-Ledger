@@ -859,7 +859,7 @@
           </div>
           <div>
             <label>End Month</label>
-            <input type="month" id="gic-end" value="2026-12" onchange="saveGicSettings()" />
+            <input type="month" id="gic-end" value="2025-12" onchange="saveGicSettings()" />
           </div>
           <div>
             <label>Opening Deposit (C$)</label>
@@ -887,7 +887,8 @@
             <tr>
               <th>Month</th>
               <th class="mono">Entry (C$)</th>
-              <th class="mono">Balance (C$)</th>
+              <th class="mono">Running Total (C$)</th>
+              <th class="mono">Balance in Month (C$)</th>
               <th class="mono">Balance (₹)</th>
             </tr>
           </thead>
@@ -958,7 +959,8 @@ let state = {
   },
   gic: {
     start: '2024-12',
-    end: '2026-12',
+    end: '2025-12',
+    v: 2,
     opening: 0,
     rate: 66,
     rows: {},
@@ -973,6 +975,7 @@ function save() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { console.warn('Save failed', e); }
 }
 function load() {
+  let migrated = false;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
@@ -981,6 +984,7 @@ function load() {
       state.gic = { ...state.gic, ...(loaded.gic || {}) };
       if (!state.expenses.rows || typeof state.expenses.rows !== 'object') state.expenses.rows = {};
       if (!state.gic.rows || typeof state.gic.rows !== 'object') state.gic.rows = {};
+      if (!state.gic.v) { state.gic.end = '2025-12'; state.gic.v = 2; migrated = true; }
       if (!Array.isArray(state.customReminders)) state.customReminders = [];
       if (!Array.isArray(state.universityFees)) state.universityFees = [];
       if (!state.fxCadInr || isNaN(state.fxCadInr)) state.fxCadInr = 67.30;
@@ -1574,8 +1578,18 @@ function saveGicSettings() {
   save(); renderGic();
 }
 
-function updateGic(month, value) {
-  state.gic.rows[month] = parseFloat(value) || 0;
+function gicRow(key) {
+  const r = state.gic.rows[key];
+  if (typeof r === 'number') return { entry: r, balance: null };
+  if (!r) return { entry: 0, balance: null };
+  return { entry: r.entry || 0, balance: (r.balance === null || r.balance === undefined) ? null : r.balance };
+}
+
+function updateGic(month, field, value) {
+  const cur = gicRow(month);
+  if (field === 'entry') cur.entry = parseFloat(value) || 0;
+  else cur.balance = (value === '' ? null : (parseFloat(value) || 0));
+  state.gic.rows[month] = { entry: cur.entry, balance: cur.balance };
   save(); renderGic();
 }
 
@@ -1585,37 +1599,48 @@ function renderGic() {
   const g = state.gic;
   const rate = g.rate || 66;
   const [sy, sm] = (g.start || '2024-12').split('-').map(Number);
-  const [ey, em] = (g.end || '2026-12').split('-').map(Number);
+  const [ey, em] = (g.end || '2025-12').split('-').map(Number);
   const startIdx = sy * 12 + sm - 1;
   const endIdx = ey * 12 + em - 1;
 
-  let balance = g.opening || 0;
-  let totalIn = 0, totalOut = 0;
+  let running = g.opening || 0;
+  let totalEntries = 0;
+  let lastBalance = null;
   let html = '';
+
   for (let t = startIdx; t <= endIdx && t - startIdx < 120; t++) {
     const yr = Math.floor(t / 12);
     const mo = (t % 12) + 1;
     const key = yr + '-' + String(mo).padStart(2, '0');
-    const entry = g.rows[key] || 0;
-    balance += entry;
-    if (entry >= 0) totalIn += entry; else totalOut += Math.abs(entry);
+    const r = gicRow(key);
+
+    running += r.entry;
+    totalEntries += r.entry;
+    if (r.balance !== null) lastBalance = r.balance;
+
+    const shownBal = (r.balance !== null) ? r.balance : running;
+
     html += '<tr>';
     html += '<td>' + fmtMonth(key) + '</td>';
-    html += '<td><input type="number" class="cell-input" value="' + (entry || '') + '" placeholder="0" onchange="updateGic(\'' + key + '\', this.value)" /></td>';
-    html += '<td class="mono">' + fmtCAD(balance) + '</td>';
-    html += '<td class="mono">' + fmtINR(balance * rate) + '</td>';
+    html += '<td><input type="number" class="cell-input" value="' + (r.entry || '') + '" placeholder="0" onchange="updateGic(\'' + key + '\', \'entry\', this.value)" /></td>';
+    html += '<td class="mono">' + fmtCAD(running) + '</td>';
+    html += '<td><input type="number" class="cell-input" value="' + (r.balance !== null ? r.balance : '') + '" placeholder="' + Math.round(running) + '" onchange="updateGic(\'' + key + '\', \'balance\', this.value)" /></td>';
+    html += '<td class="mono">' + fmtINR(shownBal * rate) + '</td>';
     html += '</tr>';
   }
   tbody.innerHTML = html;
+
+  const overall = (lastBalance !== null) ? lastBalance : running;
 
   const sum = document.getElementById('gic-summary');
   if (sum) {
     let sh = '<div class="row-4">';
     sh += '<div class="stat-block"><div class="label">Opening Deposit</div><div class="value currency">' + fmtCAD(g.opening || 0) + '</div><div class="sub">' + fmtINR((g.opening || 0) * rate) + '</div></div>';
-    sh += '<div class="stat-block"><div class="label">Added</div><div class="value currency">' + fmtCAD(totalIn) + '</div></div>';
-    sh += '<div class="stat-block"><div class="label">Withdrawn</div><div class="value currency">' + fmtCAD(totalOut) + '</div></div>';
-    sh += '<div class="stat-block accent"><div class="label">Closing Balance</div><div class="value currency">' + fmtCAD(balance) + '</div><div class="sub">' + fmtINR(balance * rate) + '</div></div>';
+    sh += '<div class="stat-block"><div class="label">Total Entries</div><div class="value currency">' + fmtCAD(totalEntries) + '</div><div class="sub">' + fmtINR(totalEntries * rate) + '</div></div>';
+    sh += '<div class="stat-block"><div class="label">Running Total</div><div class="value currency">' + fmtCAD(running) + '</div><div class="sub">' + fmtINR(running * rate) + '</div></div>';
+    sh += '<div class="stat-block accent"><div class="label">Overall Balance</div><div class="value currency">' + fmtCAD(overall) + '</div><div class="sub">' + fmtINR(overall * rate) + '</div></div>';
     sh += '</div>';
+    sh += '<div class="small-text" style="margin-top: 8px;">Overall Balance uses the latest month where you entered a balance; otherwise it falls back to the running total.</div>';
     sum.innerHTML = sh;
   }
 }
