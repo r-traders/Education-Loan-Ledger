@@ -770,19 +770,16 @@
             <input type="number" id="univ-amount" placeholder="500000" />
           </div>
         </div>
-        <button onclick="addUniversityFee()">Add Fee</button>
-      </div>
-
-      <div class="card">
         <div class="row-3">
           <div>
-            <label>Exchange Rate (1 C$ = ₹)</label>
-            <input type="number" id="univ-fx" value="67.30" step="0.01" onchange="saveFx()" />
+            <label>Rate for this transfer (1 C$ = ₹)</label>
+            <input type="number" id="univ-rate" step="0.0001" placeholder="66.0017" />
+            <div class="small-text">CAD only. Each transfer keeps its own rate.</div>
           </div>
           <div></div>
           <div></div>
         </div>
-        <div class="small-text">CAD fees are converted to INR at this rate for the grand total. Update it to your actual rate.</div>
+        <button onclick="addUniversityFee()">Add Fee</button>
       </div>
 
       <h3>Recorded Fees</h3>
@@ -1631,12 +1628,18 @@ function deleteDisbursement(idx) {
 
 function renderUniversityFees() {
   const list = document.getElementById('univ-list');
-  const fx = state.fxCadInr || 0;
-  let totalINR = 0, totalCAD = 0;
+  const fallbackFx = state.fxCadInr || 0;
+  let totalINR = 0, totalCAD = 0, cadInInr = 0;
   state.universityFees.forEach(d => {
-    if ((d.currency || 'INR') === 'CAD') totalCAD += (d.amount || 0);
-    else totalINR += (d.amount || 0);
+    const cur = d.currency || 'INR';
+    if (cur === 'CAD') {
+      totalCAD += (d.amount || 0);
+      cadInInr += (d.amount || 0) * (d.rate || fallbackFx);
+    } else {
+      totalINR += (d.amount || 0);
+    }
   });
+
   if (state.universityFees.length === 0) {
     list.innerHTML = '<div class="small-text center" style="padding: 20px;">No university fees added.</div>';
   } else {
@@ -1645,29 +1648,25 @@ function renderUniversityFees() {
     sorted.forEach((d) => {
       const realIdx = state.universityFees.indexOf(d);
       const cur = d.currency || 'INR';
-      const conv = cur === 'CAD' ? ' <span class="small-text">≈ ' + fmtINR((d.amount || 0) * fx) + '</span>' : '';
+      const rate = d.rate || fallbackFx;
+      const conv = cur === 'CAD' ? ' <span class="small-text">≈ ' + fmtINR((d.amount || 0) * rate) + '</span>' : '';
+      const rateNote = cur === 'CAD' ? ' <span class="small-text">@ ₹' + rate + '</span>' : '';
       html += '<div class="list-item">';
-      html += '<div><strong>' + fmtMonth(d.date) + '</strong> <span class="small-text">' + cur + '</span></div>';
+      html += '<div><strong>' + fmtMonth(d.date) + '</strong> <span class="small-text">' + cur + '</span>' + rateNote + '</div>';
       html += '<div class="gap-row"><span class="amount">' + fmtFee(d.amount, cur) + conv + '</span><button class="icon" onclick="deleteUniversityFee(' + realIdx + ')">×</button></div>';
       html += '</div>';
     });
     list.innerHTML = html;
   }
+
   const t = document.getElementById('univ-total');
   if (t) {
-    const cadInInr = totalCAD * fx;
     let h = '';
     h += '<div class="list-item" style="border-top: 2px solid var(--rule);"><div><strong>Total (₹ INR)</strong></div><div class="amount"><strong>' + fmtINR(totalINR) + '</strong></div></div>';
     h += '<div class="list-item"><div><strong>Total (C$ CAD)</strong></div><div class="amount"><strong>' + fmtCAD(totalCAD) + '</strong> <span class="small-text">≈ ' + fmtINR(cadInInr) + '</span></div></div>';
-    h += '<div class="list-item" style="border-top: 2px solid var(--ink);"><div><strong>Grand Total (₹ INR incl. CAD)</strong><div class="small-text">at 1 C$ = ₹' + fx + '</div></div><div class="amount"><strong>' + fmtINR(totalINR + cadInInr) + '</strong></div></div>';
+    h += '<div class="list-item" style="border-top: 2px solid var(--ink);"><div><strong>Grand Total (₹ INR incl. CAD)</strong><div class="small-text">each transfer converted at its own rate</div></div><div class="amount"><strong>' + fmtINR(totalINR + cadInInr) + '</strong></div></div>';
     t.innerHTML = h;
   }
-}
-
-function saveFx() {
-  state.fxCadInr = parseFloat(document.getElementById('univ-fx').value) || 0;
-  save();
-  renderUniversityFees();
 }
 
 function addUniversityFee() {
@@ -1675,7 +1674,13 @@ function addUniversityFee() {
   const amount = parseFloat(document.getElementById('univ-amount').value);
   const currency = document.getElementById('univ-currency').value || 'INR';
   if (!date || !amount) { alert('Please enter date and amount'); return; }
-  state.universityFees.push({ date, amount, currency });
+  let rate = 0;
+  if (currency === 'CAD') {
+    rate = parseFloat(document.getElementById('univ-rate').value) || 0;
+    if (!rate) { alert('Please enter the exchange rate used for this transfer'); return; }
+    state.fxCadInr = rate;
+  }
+  state.universityFees.push({ date, amount, currency, rate });
   document.getElementById('univ-date').value = '';
   document.getElementById('univ-amount').value = '';
   save(); renderAll();
@@ -1747,7 +1752,7 @@ function populateForm() {
   document.getElementById('bi-gst').value = state.bankInsurance.gst;
   document.getElementById('bi-other').value = state.bankInsurance.other;
   document.getElementById('bi-notes').value = state.bankInsurance.notes || '';
-  document.getElementById('univ-fx').value = state.fxCadInr;
+  document.getElementById('univ-rate').value = state.fxCadInr;
   renderBankInsurance();
 
   // Default payment date to today
