@@ -1662,8 +1662,7 @@ function renderUniversityFees() {
   const t = document.getElementById('univ-total');
   if (t) {
     let h = '';
-    h += '<div class="list-item" style="border-top: 2px solid var(--rule);"><div><strong>Total (₹ INR)</strong></div><div class="amount"><strong>' + fmtINR(totalINR) + '</strong></div></div>';
-    h += '<div class="list-item"><div><strong>Total (C$ CAD)</strong></div><div class="amount"><strong>' + fmtCAD(totalCAD) + '</strong> <span class="small-text">≈ ' + fmtINR(cadInInr) + '</span></div></div>';
+    h += '<div class="list-item" style="border-top: 2px solid var(--rule);"><div><strong>Total (C$ CAD)</strong></div><div class="amount"><strong>' + fmtCAD(totalCAD) + '</strong> <span class="small-text">≈ ' + fmtINR(cadInInr) + '</span></div></div>';
     h += '<div class="list-item" style="border-top: 2px solid var(--ink);"><div><strong>Grand Total (₹ INR incl. CAD)</strong><div class="small-text">each transfer converted at its own rate</div></div><div class="amount"><strong>' + fmtINR(totalINR + cadInInr) + '</strong></div></div>';
     t.innerHTML = h;
   }
