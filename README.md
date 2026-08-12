@@ -5,7 +5,6 @@ A personal, browser-based tool to track an education loan with phased disburseme
 ## Files in this folder
 
 - **`index.html`** — the interactive tracker tool
-- **`Final_Plan_Summary.pdf`** — one-page summary of the locked-in plan (printable, share-able)
 - **`README.md`** — this file
 
 ## What it does
